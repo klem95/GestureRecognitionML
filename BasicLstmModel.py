@@ -38,10 +38,10 @@ class BasicLstmModel:
 
 
     def train_model(self):
-        xTrain = shape(t)
+        #xTrain = shape(t)
         yTrain = self.onehotLabels
 
-        xTest = shape(t)
+        #xTest = shape(t)
         yTest = self.onehotLabels
 
 
