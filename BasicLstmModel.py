@@ -1,3 +1,4 @@
+
 import numpy as np
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Flatten
@@ -104,3 +105,4 @@ class BasicLstmModel:
 
     def make_prediction(self):
         print("Make Prediction")
+
