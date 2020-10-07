@@ -13,21 +13,24 @@ class LSTM_s:
 
     def __init__(self):
         self.batch_size = 10
-        self.epochs = 100
+        self.epochs = 200
         self.learning_rate = 0.01
         self.label_size = 0
         self.trained_model_path = 'Trained_models'  # use your path
-        self.testDataEvery = 5
+
+        self.validationDataEvery = 5
 
         self.train_dataset = []
-        self.test_dataset = []
+        self.validation_dataset = []
         self.trainFiles = []
-        self.testFiles = []
+        self.validationFiles = []
 
     def retrieve_data(self):
         path = r'recodsZeros'  # use your path
         all_files = glob2.glob(path + "/*.csv")
         i = 0
+
+        count = 0
 
         for filename in all_files:
             #            self.dfs.append(np.array(pd.read_csv(filename)))
@@ -41,13 +44,10 @@ class LSTM_s:
                         continue
                     float_list = [float(s.replace(',', '')) for s in row]
                     sample.append(np.asarray(float_list).astype(float))
-
-                if i % self.testDataEvery == 0:
-                    print('adding test')
-                    self.test_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
-                    self.testFiles.append(filename)
+                if i % self.validationDataEvery == 0:
+                    self.validation_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
+                    self.validationFiles.append(filename)
                 else:
-                    print('adding train')
                     self.train_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.trainFiles.append(filename)
 
@@ -56,7 +56,7 @@ class LSTM_s:
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)
         self.onehotTrainLabels = self.encode_labels(self.trainFiles)
-        self.onehotTestLabels = self.encode_labels(self.testFiles)
+        self.onehotValidationLabels = self.encode_labels(self.validationFiles)
 
  #   def date_evaluation(self):
   #      for sample in self.total_dataset:
@@ -79,14 +79,14 @@ class LSTM_s:
         self.retrieve_data()
         print('train data')
         print(np.asarray(self.train_dataset).shape)
-        print('test data')
-        print(np.asarray(self.test_dataset).shape)
+        print('validation data')
+        print(np.asarray(self.validation_dataset).shape)
         #self.date_evaluation()
 
         x_train = np.asarray(self.train_dataset)
         y_train = np.asarray(self.onehotTrainLabels)
-        x_validation = np.asarray(self.test_dataset)
-        y_validation = np.asarray(self.onehotTestLabels)
+        x_validation = np.asarray(self.validation_dataset)
+        y_validation = np.asarray(self.onehotValidationLabels)
         self.label_size = len(y_train[0])
 
         print(self.label_size)
@@ -95,10 +95,10 @@ class LSTM_s:
         print(x_train[0][0].shape)
 
         model = Sequential()
-        model.add(LSTM(100, return_sequences=True, recurrent_dropout=0.3, input_shape=(15, 289)))
-        model.add(LSTM(32, recurrent_dropout=0.2))
+        model.add(LSTM(150, return_sequences=True, recurrent_dropout=0.2, input_shape=(60, 289)))
+        model.add(LSTM(64, recurrent_dropout=0.1))
         model.add(Flatten())
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.1))
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=self.learning_rate),
                       metrics=['accuracy', 'AUC'])
@@ -110,14 +110,8 @@ class LSTM_s:
 
         plt.title('Loss')
         plt.plot(history.history['loss'], label='train')
-        plt.plot(history.history['val_loss'], label='test')
+        plt.plot(history.history['val_loss'], label='validation')
         plt.legend()
         plt.show()
-
-
-        test = np.asarray(x_train[1]).reshape(1,len(x_train[1]),len(x_train[1][0]))
-        print(test.shape)
-
-        print(model.predict(test))
 
         model.save(self.trained_model_path, 'Lstm_s')
