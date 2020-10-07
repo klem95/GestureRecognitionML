@@ -12,13 +12,13 @@ import matplotlib.pyplot as plt
 class LSTM_s:
 
     def __init__(self):
-        self.batch_size = 15
+        self.batch_size = 10
         self.epochs = 200
         self.learning_rate = 0.01
         self.label_size = 0
         self.trained_model_path = 'Trained_models'  # use your path
 
-        self.testDataEvery = 5
+        self.testDataEvery = 10
 
         self.train_dataset = []
         self.test_dataset = []
@@ -45,11 +45,9 @@ class LSTM_s:
                     float_list = [float(s.replace(',', '')) for s in row]
                     sample.append(np.asarray(float_list).astype(float))
                 if i % self.testDataEvery == 0:
-                    print('adding test')
                     self.test_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.testFiles.append(filename)
                 else:
-                    print('adding train')
                     self.train_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.trainFiles.append(filename)
 
@@ -69,11 +67,7 @@ class LSTM_s:
 
     def encode_labels(self, file_names):
         mappedFileNames = []
-        count = 0
         for filename in file_names:
-            count += 1
-            if count == 1 or count == 11 or count == 21:
-                continue
             mappedFileNames.append(filename[5:-7])
         integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
         integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
@@ -102,7 +96,7 @@ class LSTM_s:
 
         model = Sequential()
         model.add(LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(None, 289)))
-        model.add(LSTM(32, recurrent_dropout=0.5))
+        model.add(LSTM(64, recurrent_dropout=0.5))
         model.add(Flatten())
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=self.learning_rate),
@@ -118,33 +112,5 @@ class LSTM_s:
         plt.plot(history.history['val_loss'], label='test')
         plt.legend()
         plt.show()
-
-
-        test = np.asarray(self.hidden_data[0]).reshape(1,len(self.hidden_data[0]),len(self.hidden_data[0][0]))
-        test1 = np.asarray(self.hidden_data[1]).reshape(1,len(self.hidden_data[1]),len(self.hidden_data[1][0]))
-        test2 = np.asarray(self.hidden_data[2]).reshape(1,len(self.hidden_data[2]),len(self.hidden_data[2][0]))
-
-        print(test.shape)
-        print(test1.shape)
-        print(test2.shape)
-
-        results = np.asarray(model.predict(test))
-        results1 = np.asarray(model.predict(test1))
-        results2 = np.asarray(model.predict(test2))
-
-        for result in results[0]:
-            print("%.6f" %result)
-        print("_____________________")
-        for result in results1[0]:
-            print("%.6f" %result)
-        print("_____________________")
-        for result in results2[0]:
-            print("%.6f" %result)
-
-
-
-
-
-
 
         model.save(self.trained_model_path, 'Lstm_s')
