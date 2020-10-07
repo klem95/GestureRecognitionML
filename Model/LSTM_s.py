@@ -1,7 +1,7 @@
 import numpy as np
 from keras.models import Sequential
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Embedding
+from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 import glob2
@@ -95,9 +95,10 @@ class LSTM_s:
         print(x_train[0][0].shape)
 
         model = Sequential()
-        model.add(LSTM(100, return_sequences=True, recurrent_dropout=0.3, input_shape=(None, 289)))
-        model.add(LSTM(32, recurrent_dropout=0.5))
+        model.add(LSTM(100, return_sequences=True, recurrent_dropout=0.3, input_shape=(15, 289)))
+        model.add(LSTM(32, recurrent_dropout=0.2))
         model.add(Flatten())
+        model.add(Dropout(0.5))
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=self.learning_rate),
                       metrics=['accuracy', 'AUC'])
