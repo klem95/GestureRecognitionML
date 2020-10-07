@@ -12,17 +12,18 @@ import matplotlib.pyplot as plt
 class LSTM_s:
 
     def __init__(self):
-        self.batch_size = 10
-        self.epochs = 100
+        self.batch_size = 15
+        self.epochs = 200
         self.learning_rate = 0.01
         self.total_dataset = []
         self.label_size = 0
         self.trained_model_path = 'Trained_models'  # use your path
-
-
+        self.hidden_data = []
     def retrieve_data(self):
         path = r'recodsZeros'  # use your path
         all_files = glob2.glob(path + "/*.csv")
+
+        count = 0
 
         for filename in all_files:
             #            self.dfs.append(np.array(pd.read_csv(filename)))
@@ -38,7 +39,14 @@ class LSTM_s:
                     sample.append(np.asarray(float_list).astype(float))
 
                 sample = np.asarray(sample)
-                self.total_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
+
+                if count == 1 or count == 11 or count == 21:
+                    self.hidden_data.append(np.asarray(sample))
+                else:
+                    self.total_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
+
+            count += 1
+
 
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)
@@ -53,7 +61,11 @@ class LSTM_s:
 
     def encode_labels(self, file_names):
         mappedFileNames = []
+        count = 0
         for filename in file_names:
+            count += 1
+            if count == 1 or count == 11 or count == 21:
+                continue
             mappedFileNames.append(filename[5:-7])
         integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
         integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
@@ -77,7 +89,7 @@ class LSTM_s:
         print(x_train[0][0].shape)
 
         model = Sequential()
-        model.add(LSTM(100, return_sequences=True, recurrent_dropout=0.3, input_shape=(None, 289)))
+        model.add(LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(None, 289)))
         model.add(LSTM(32, recurrent_dropout=0.5))
         model.add(Flatten())
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
@@ -96,9 +108,31 @@ class LSTM_s:
         plt.show()
 
 
-        test = np.asarray(x_train[1]).reshape(1,len(x_train[1]),len(x_train[1][0]))
-        print(test.shape)
+        test = np.asarray(self.hidden_data[0]).reshape(1,len(self.hidden_data[0]),len(self.hidden_data[0][0]))
+        test1 = np.asarray(self.hidden_data[1]).reshape(1,len(self.hidden_data[1]),len(self.hidden_data[1][0]))
+        test2 = np.asarray(self.hidden_data[2]).reshape(1,len(self.hidden_data[2]),len(self.hidden_data[2][0]))
 
-        print(model.predict(test))
+        print(test.shape)
+        print(test1.shape)
+        print(test2.shape)
+
+        results = np.asarray(model.predict(test))
+        results1 = np.asarray(model.predict(test1))
+        results2 = np.asarray(model.predict(test2))
+
+        for result in results[0]:
+            print("%.6f" %result)
+        print("_____________________")
+        for result in results1[0]:
+            print("%.6f" %result)
+        print("_____________________")
+        for result in results2[0]:
+            print("%.6f" %result)
+
+
+
+
+
+
 
         model.save(self.trained_model_path, 'Lstm_s')
