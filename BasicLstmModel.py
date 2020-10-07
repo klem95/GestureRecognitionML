@@ -17,6 +17,7 @@ class BasicLstmModel:
     first_layer_rollouts = 50
 
     def __init__(self, batch_size, epochs):
+        self.testDataEvery = 5
         self.batch_size = batch_size
         self.epochs = epochs
 
@@ -24,7 +25,9 @@ class BasicLstmModel:
         all_files = glob2.glob(path + "/*.csv")
 
         self.dfs = []
+        self.trainingData = []
         labels = []
+        i = 0
         for filename in all_files:
             #            self.dfs.append(np.array(pd.read_csv(filename)))
             with open(filename, newline='') as csvfile:
@@ -38,10 +41,15 @@ class BasicLstmModel:
                         continue
                     labels.append(filename[5:-7])
                     float_list = [float(s.replace(',', '')) for s in row]
-                    self.dfs.append(np.asarray(float_list).astype(float))
+                    if i % self.testDataEvery == 0:
+                        self.trainingData.append(np.asarray(float_list).astype(float))
+                    else:
+                        self.dfs.append(np.asarray(float_list).astype(float))
+
                     #sample.append(np.asarray(float_list).astype(float))
                 # print('------')
                 # self.dfs.append(np.asarray(sample))
+                i += 1
 
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)

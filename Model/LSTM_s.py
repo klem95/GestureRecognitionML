@@ -15,13 +15,20 @@ class LSTM_s:
         self.batch_size = 15
         self.epochs = 200
         self.learning_rate = 0.01
-        self.total_dataset = []
         self.label_size = 0
         self.trained_model_path = 'Trained_models'  # use your path
-        self.hidden_data = []
+
+        self.testDataEvery = 5
+
+        self.train_dataset = []
+        self.test_dataset = []
+        self.trainFiles = []
+        self.testFiles = []
+
     def retrieve_data(self):
         path = r'recodsZeros'  # use your path
         all_files = glob2.glob(path + "/*.csv")
+        i = 0
 
         count = 0
 
@@ -37,20 +44,21 @@ class LSTM_s:
                         continue
                     float_list = [float(s.replace(',', '')) for s in row]
                     sample.append(np.asarray(float_list).astype(float))
-
-                sample = np.asarray(sample)
-
-                if count == 1 or count == 11 or count == 21:
-                    self.hidden_data.append(np.asarray(sample))
+                if i % self.testDataEvery == 0:
+                    print('adding test')
+                    self.test_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
+                    self.testFiles.append(filename)
                 else:
-                    self.total_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
+                    print('adding train')
+                    self.train_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
+                    self.trainFiles.append(filename)
 
-            count += 1
-
+            i += 1
 
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)
-        self.onehotLabels = self.encode_labels(all_files)
+        self.onehotTrainLabels = self.encode_labels(self.trainFiles)
+        self.onehotTestLabels = self.encode_labels(self.testFiles)
 
  #   def date_evaluation(self):
   #      for sample in self.total_dataset:
@@ -75,13 +83,17 @@ class LSTM_s:
 
     def train_model(self):
         self.retrieve_data()
+        print('train data')
+        print(np.asarray(self.train_dataset).shape)
+        print('test data')
+        print(np.asarray(self.test_dataset).shape)
         #self.date_evaluation()
 
-        x_train = np.asarray(self.total_dataset)
-        y_train = np.asarray(self.onehotLabels)
+        x_train = np.asarray(self.train_dataset)
+        y_train = np.asarray(self.onehotTrainLabels)
+        x_validation = np.asarray(self.test_dataset)
+        y_validation = np.asarray(self.onehotTestLabels)
         self.label_size = len(y_train[0])
-        x_validation = np.asarray(self.total_dataset)
-        y_validation = np.asarray(self.onehotLabels)
 
         print(self.label_size)
         print(x_train.shape)
@@ -99,7 +111,7 @@ class LSTM_s:
         model.summary()
 
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
-                           validation_data=(x_validation, y_validation))
+                          validation_data=(x_validation, y_validation))
 
         plt.title('Loss')
         plt.plot(history.history['loss'], label='train')
