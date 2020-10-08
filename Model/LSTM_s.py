@@ -1,7 +1,8 @@
 import numpy as np
 from keras.models import Sequential
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Embedding
+from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout
+from keras.optimizers import schedules
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 import glob2
@@ -17,7 +18,8 @@ class LSTM_s:
         self.learning_rate = 0.01
         self.label_size = 0
         self.trained_model_path = 'Trained_models'  # use your path
-
+        self.time_steps = 0
+        self.feature_size = 0
         self.testDataEvery = 10
 
         self.train_dataset = []
@@ -58,12 +60,12 @@ class LSTM_s:
         self.onehotTrainLabels = self.encode_labels(self.trainFiles)
         self.onehotTestLabels = self.encode_labels(self.testFiles)
 
- #   def date_evaluation(self):
-  #      for sample in self.total_dataset:
- #           for row in sample:
-  #              for val in row:
-   #                 if type(val) is not np.float:
-                        #print(type(val))
+    #   def date_evaluation(self):
+    #      for sample in self.total_dataset:
+    #           for row in sample:
+    #              for val in row:
+    #                 if type(val) is not np.float:
+    # print(type(val))
 
     def encode_labels(self, file_names):
         mappedFileNames = []
@@ -81,31 +83,41 @@ class LSTM_s:
         print(np.asarray(self.train_dataset).shape)
         print('test data')
         print(np.asarray(self.test_dataset).shape)
-        #self.date_evaluation()
+        # self.date_evaluation()
 
         x_train = np.asarray(self.train_dataset)
         y_train = np.asarray(self.onehotTrainLabels)
         x_validation = np.asarray(self.test_dataset)
         y_validation = np.asarray(self.onehotTestLabels)
+
         self.label_size = len(y_train[0])
+        self.time_steps = x_train.shape[1]
+        self.feature_size = x_train.shape[2]
 
         print(self.label_size)
         print(x_train.shape)
         print(x_train[0].shape)
         print(x_train[0][0].shape)
 
+        lr_schedule = schedules.ExponentialDecay(
+            initial_learning_rate=1e-2,
+            decay_steps=10000,
+            decay_rate=0.9)
+
         model = Sequential()
-        model.add(LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(None, 289)))
-        model.add(LSTM(64, recurrent_dropout=0.5))
+        model.add(
+            LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(self.time_steps, self.feature_size)))
+        model.add(LSTM(64, recurrent_dropout=0.2))
         model.add(Flatten())
+        model.add(Dropout(0.2))
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
-        model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=self.learning_rate),
+        model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr_schedule),
                       metrics=['accuracy', 'AUC'])
 
         model.summary()
 
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
-                          validation_data=(x_validation, y_validation))
+                            validation_data=(x_validation, y_validation))
 
         plt.title('Loss')
         plt.plot(history.history['loss'], label='train')
