@@ -22,10 +22,12 @@ class LSTM_s:
         self.feature_size = 0
         self.testDataEvery = 10
 
+        self.validationDataEvery = 5
+
         self.train_dataset = []
-        self.test_dataset = []
+        self.validation_dataset = []
         self.trainFiles = []
-        self.testFiles = []
+        self.validationFiles = []
 
     def retrieve_data(self):
         path = r'recodsZeros'  # use your path
@@ -46,9 +48,9 @@ class LSTM_s:
                         continue
                     float_list = [float(s.replace(',', '')) for s in row]
                     sample.append(np.asarray(float_list).astype(float))
-                if i % self.testDataEvery == 0:
-                    self.test_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
-                    self.testFiles.append(filename)
+                if i % self.validationDataEvery == 0:
+                    self.validation_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
+                    self.validationFiles.append(filename)
                 else:
                     self.train_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.trainFiles.append(filename)
@@ -58,7 +60,7 @@ class LSTM_s:
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)
         self.onehotTrainLabels = self.encode_labels(self.trainFiles)
-        self.onehotTestLabels = self.encode_labels(self.testFiles)
+        self.onehotValidationLabels = self.encode_labels(self.validationFiles)
 
     #   def date_evaluation(self):
     #      for sample in self.total_dataset:
@@ -81,14 +83,15 @@ class LSTM_s:
         self.retrieve_data()
         print('train data')
         print(np.asarray(self.train_dataset).shape)
-        print('test data')
-        print(np.asarray(self.test_dataset).shape)
-        # self.date_evaluation()
+
+        print('validation data')
+        print(np.asarray(self.validation_dataset).shape)
+        #self.date_evaluation()
 
         x_train = np.asarray(self.train_dataset)
         y_train = np.asarray(self.onehotTrainLabels)
-        x_validation = np.asarray(self.test_dataset)
-        y_validation = np.asarray(self.onehotTestLabels)
+        x_validation = np.asarray(self.validation_dataset)
+        y_validation = np.asarray(self.onehotValidationLabels)
 
         self.label_size = len(y_train[0])
         self.time_steps = x_train.shape[1]
@@ -121,7 +124,7 @@ class LSTM_s:
 
         plt.title('Loss')
         plt.plot(history.history['loss'], label='train')
-        plt.plot(history.history['val_loss'], label='test')
+        plt.plot(history.history['val_loss'], label='validation')
         plt.legend()
         plt.show()
 
