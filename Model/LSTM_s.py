@@ -17,7 +17,7 @@ class LSTM_s:
         self.epochs = 200
         self.learning_rate = 0.01
         self.label_size = 0
-        self.dataPath = r'Data'
+        self.dataPath = r'recodsZeros'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
@@ -59,26 +59,18 @@ class LSTM_s:
                 firstLine = True
                 dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
                 sample = []
-
-                for j in range(0, largestRowCount):
+                for row in dataScanner:
                     if firstLine:
                         firstLine = False
                         continue
-                    if j < len(dataScanner):
-                        float_list = [float(s.replace(',', '')) for s in dataScanner[j]]
-                        sample.append(np.asarray(float_list).astype(float))
-                    else:
-                        float_list = [float(0) for s in dataScanner[j]]
-                        sample.append(np.asarray(float_list).astype(float))
-
+                    float_list = [float(s.replace(',', '')) for s in row]
+                    sample.append(np.asarray(float_list).astype(float))
                 if i % self.validationDataEvery == 0:
                     self.validation_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.validationFiles.append(filename)
-                    print(filename)
                 else:
                     self.train_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.trainFiles.append(filename)
-                    print(filename)
 
             i += 1
 
@@ -121,9 +113,9 @@ class LSTM_s:
 
         print()
 
-        # self.label_size = len(y_train[0])
-        # #self.time_steps = x_train.shape[1]
-       # self.feature_size = x_train.shape[2]
+        self.label_size = len(y_train[0])
+        self.time_steps = x_train.shape[1]
+        self.feature_size = x_train.shape[2]
         #
         # print(self.label_size)
         # print(x_train[0].shape)
@@ -136,7 +128,7 @@ class LSTM_s:
 
         model = Sequential()
         model.add(
-            LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(None, len(self.train_dataset[0][0]))))
+            LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(self.time_steps, self.feature_size)))
         model.add(LSTM(64, recurrent_dropout=0.2))
         model.add(Flatten())
         model.add(Dropout(0.2))
