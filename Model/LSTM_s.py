@@ -14,15 +14,14 @@ import matplotlib.pyplot as plt
 class LSTM_s:
 
     def __init__(self):
-        self.batch_size = 10
+        self.batch_size = 200
         self.epochs = 200
-        self.learning_rate = 0.01
+        self.learning_rate = 0.02
         self.label_size = 0
         self.dataPath = r'Data'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
-        self.testDataEvery = 10
 
         self.validationDataEvery = 2
 
@@ -30,21 +29,28 @@ class LSTM_s:
         self.validation_dataset = []
         self.trainFiles = []
         self.validationFiles = []
+        self.time_steps = 15
 
 
     def biggestDocLength (self):
         all_files = glob2.glob(self.dataPath + "/*.csv")
         biggestRowCount = 0
+
+
         for filename in all_files:
             with open(filename, newline='') as csvfile:
                 length = 0
                 dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
-
                 for row in dataScanner:
                     length += 1
                 if(length > biggestRowCount):
                     biggestRowCount = length
-        return biggestRowCount
+
+
+        timeStepLength = biggestRowCount + self.time_steps - (biggestRowCount % self.time_steps)
+        print("timeStepLength:")
+        print(timeStepLength)
+        return timeStepLength
 
 
 
@@ -79,23 +85,32 @@ class LSTM_s:
 
 
                 appended = 0
-                for j in range(0, largestRowCount + 1):
+                for j in range(0, largestRowCount + 2):
                     if j > row_count:
                         # print('appending zero ')
                         appended += 1
                         sample.append(np.zeros(len(float_list)).astype(float))
 
-                #print('Length of APPENDED file samples: ' + str(len(sample)))
-                #print('          APPENDED: ' + str(appended))
+                print('Length of APPENDED file samples: ' + str(len(sample)))
+                print('          APPENDED: ' + str(appended))
                 # print(np.asarray(sample).shape())
-                if i % self.validationDataEvery == 0:
-                    self.validation_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
-                    self.validationFiles.append(filename)
-                else:
-                    self.train_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
-                    self.trainFiles.append(filename)
+                print(np.asarray(sample).shape[1])
+                featSize = np.asarray(sample).shape[1]
+                reshapedAsTimeSteps = np.asarray(sample).reshape((-1, self.time_steps, featSize))
+
+                for j in range(0, len(reshapedAsTimeSteps)):
+                    if i % self.validationDataEvery == 0:
+                        print(len(reshapedAsTimeSteps))
+                        self.validation_dataset.append(np.asarray(reshapedAsTimeSteps[j]))  # <--- 54 is a problem...
+                        self.validationFiles.append(filename)
+                    else:
+                        self.train_dataset.append(np.asarray(reshapedAsTimeSteps[j]))  # <--- 54 is a problem...
+                        self.trainFiles.append(filename)
 
             i += 1
+
+        # self.train_dataset = np.asarray(self.train_dataset).reshape((-1, 45, np.asarray(self.train_dataset).shape[2]))
+        # self.validation_dataset = np.asarray(self.validation_dataset).reshape((-1, 45, np.asarray(self.validation_dataset).shape[2]))
 
         print('validation files: ')
         print((self.validationFiles))
@@ -143,7 +158,6 @@ class LSTM_s:
         print(self.onehotValidationLabels)
 
         self.label_size = len(y_train[0])
-        self.time_steps = x_train.shape[1]
         self.feature_size = x_train.shape[2]
 
         # print(self.label_size)
@@ -153,19 +167,22 @@ class LSTM_s:
         mcp_save = ModelCheckpoint('.mdl_wts.hdf5', save_best_only=True, monitor='val_loss', mode='min')
 
         lr_schedule = schedules.ExponentialDecay(
-            initial_learning_rate=1e-2,
+            initial_learning_rate=self.learning_rate,
             decay_steps=10000,
-            decay_rate=0.9)
+            decay_rate=0.5
+        )
+
+        print(x_train.shape)
 
         model = Sequential()
         model.add(
-            LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(self.time_steps, self.feature_size)))
-        model.add(LSTM(64, recurrent_dropout=0.2))
+            LSTM(150, return_sequences=True, recurrent_dropout=0.2, input_shape=(self.time_steps, self.feature_size)))
+        model.add(LSTM(64, recurrent_dropout=0.4))
         model.add(Flatten())
-        model.add(Dropout(0.2))
-        model.add(Dense(self.label_size, activation='softmax'))  # Classification
+        model.add(Dropout(0.5))
+        model.add(Dense(self.label_size, activation='softmax')) # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr_schedule),
-                      metrics=['accuracy', 'AUC'])
+                      metrics=['accuracy'])
 
         model.summary()
 
@@ -173,6 +190,7 @@ class LSTM_s:
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
 
         plt.title('Loss')
+        print(mcp_save.best)
         plt.plot(history.history['loss'], label='train')
         plt.plot(history.history['val_loss'], label='validation')
         plt.legend()
