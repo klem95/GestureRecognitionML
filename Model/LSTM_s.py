@@ -3,6 +3,7 @@ from keras.models import Sequential
 from keras.optimizers import Adam
 from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout
 from keras.optimizers import schedules
+from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 import glob2
@@ -23,7 +24,7 @@ class LSTM_s:
         self.feature_size = 0
         self.testDataEvery = 10
 
-        self.validationDataEvery = 5
+        self.validationDataEvery = 2
 
         self.train_dataset = []
         self.validation_dataset = []
@@ -149,6 +150,8 @@ class LSTM_s:
         # print(x_train[0].shape)
         # print(x_train[0][0].shape)
 
+        mcp_save = ModelCheckpoint('.mdl_wts.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+
         lr_schedule = schedules.ExponentialDecay(
             initial_learning_rate=1e-2,
             decay_steps=10000,
@@ -167,12 +170,13 @@ class LSTM_s:
         model.summary()
 
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
-                            validation_data=(x_validation, y_validation))
+                            validation_data=(x_validation, y_validation), callbacks=[mcp_save])
 
         plt.title('Loss')
         plt.plot(history.history['loss'], label='train')
         plt.plot(history.history['val_loss'], label='validation')
         plt.legend()
         plt.show()
+
 
         model.save(self.trained_model_path, 'Lstm_s')
