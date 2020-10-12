@@ -17,7 +17,7 @@ class LSTM_s:
         self.epochs = 200
         self.learning_rate = 0.01
         self.label_size = 0
-        self.dataPath = r'recodsZeros'
+        self.dataPath = r'Data'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
@@ -42,29 +42,51 @@ class LSTM_s:
                 for row in dataScanner:
                     length += 1
                 if(length > biggestRowCount):
-                    biggestRowCount = length - 1
+                    biggestRowCount = length
         return biggestRowCount
+
 
 
 
     def retrieve_data(self):
 
         all_files = glob2.glob(self.dataPath + "/*.csv")
+        print(type(all_files))
+
         i = 0
         count = 0
 
         largestRowCount = self.biggestDocLength()
-        for filename in all_files:
+        print(largestRowCount)
+
+        for filename in sorted(all_files):
             with open(filename, newline='') as csvfile:
+                print(filename)
                 firstLine = True
                 dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
                 sample = []
+                row_count = 0
                 for row in dataScanner:
+                    row_count += 1
                     if firstLine:
                         firstLine = False
                         continue
                     float_list = [float(s.replace(',', '')) for s in row]
                     sample.append(np.asarray(float_list).astype(float))
+
+                #print('Length of ORIGINAL file samples: ' + str(len(sample)))
+
+
+                appended = 0
+                for j in range(0, largestRowCount + 1):
+                    if j > row_count:
+                        # print('appending zero ')
+                        appended += 1
+                        sample.append(np.zeros(len(float_list)).astype(float))
+
+                #print('Length of APPENDED file samples: ' + str(len(sample)))
+                #print('          APPENDED: ' + str(appended))
+                # print(np.asarray(sample).shape())
                 if i % self.validationDataEvery == 0:
                     self.validation_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.validationFiles.append(filename)
@@ -74,6 +96,10 @@ class LSTM_s:
 
             i += 1
 
+        print('validation files: ')
+        print((self.validationFiles))
+        print('train files: ')
+        print((self.trainFiles))
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)
         self.onehotTrainLabels = self.encode_labels(self.trainFiles)
@@ -90,6 +116,7 @@ class LSTM_s:
         mappedFileNames = []
         for filename in file_names:
             mappedFileNames.append(filename[5:-7])
+            # print(file_names)
         integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
         integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
         onehot_encoded = self.oneHot_encoder.fit_transform(integer_encoded)
@@ -109,14 +136,15 @@ class LSTM_s:
         y_train = np.asarray(self.onehotTrainLabels)
         x_validation = np.asarray(self.validation_dataset)
         y_validation = np.asarray(self.onehotValidationLabels)
-        print('smagen data')
-
-        print()
+        print('y train: ')
+        print(self.onehotValidationLabels)
+        print('y validation: ')
+        print(self.onehotValidationLabels)
 
         self.label_size = len(y_train[0])
         self.time_steps = x_train.shape[1]
         self.feature_size = x_train.shape[2]
-        #
+
         # print(self.label_size)
         # print(x_train[0].shape)
         # print(x_train[0][0].shape)
