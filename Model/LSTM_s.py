@@ -17,7 +17,7 @@ class LSTM_s:
         self.epochs = 200
         self.learning_rate = 0.01
         self.label_size = 0
-        self.dataPath = r'Data'
+        self.dataPath = r'recodsZeros'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
