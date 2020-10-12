@@ -17,6 +17,7 @@ class LSTM_s:
         self.epochs = 200
         self.learning_rate = 0.01
         self.label_size = 0
+        self.dataPath = r'Data'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
@@ -29,31 +30,55 @@ class LSTM_s:
         self.trainFiles = []
         self.validationFiles = []
 
-    def retrieve_data(self):
-        path = r'recodsZeros'  # use your path
-        all_files = glob2.glob(path + "/*.csv")
-        i = 0
 
+    def biggestDocLength (self):
+        all_files = glob2.glob(self.dataPath + "/*.csv")
+        biggestRowCount = 0
+        for filename in all_files:
+            with open(filename, newline='') as csvfile:
+                length = 0
+                dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
+
+                for row in dataScanner:
+                    length += 1
+                if(length > biggestRowCount):
+                    biggestRowCount = length - 1
+        return biggestRowCount
+
+
+
+    def retrieve_data(self):
+
+        all_files = glob2.glob(self.dataPath + "/*.csv")
+        i = 0
         count = 0
 
+        largestRowCount = self.biggestDocLength()
         for filename in all_files:
-            #            self.dfs.append(np.array(pd.read_csv(filename)))
             with open(filename, newline='') as csvfile:
                 firstLine = True
                 dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
                 sample = []
-                for row in dataScanner:
+
+                for j in range(0, largestRowCount):
                     if firstLine:
                         firstLine = False
                         continue
-                    float_list = [float(s.replace(',', '')) for s in row]
-                    sample.append(np.asarray(float_list).astype(float))
+                    if j < len(dataScanner):
+                        float_list = [float(s.replace(',', '')) for s in dataScanner[j]]
+                        sample.append(np.asarray(float_list).astype(float))
+                    else:
+                        float_list = [float(0) for s in dataScanner[j]]
+                        sample.append(np.asarray(float_list).astype(float))
+
                 if i % self.validationDataEvery == 0:
                     self.validation_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.validationFiles.append(filename)
+                    print(filename)
                 else:
                     self.train_dataset.append(np.asarray(sample))  # <--- 54 is a problem...
                     self.trainFiles.append(filename)
+                    print(filename)
 
             i += 1
 
@@ -92,15 +117,17 @@ class LSTM_s:
         y_train = np.asarray(self.onehotTrainLabels)
         x_validation = np.asarray(self.validation_dataset)
         y_validation = np.asarray(self.onehotValidationLabels)
+        print('smagen data')
 
-        self.label_size = len(y_train[0])
-        self.time_steps = x_train.shape[1]
-        self.feature_size = x_train.shape[2]
+        print()
 
-        print(self.label_size)
-        print(x_train.shape)
-        print(x_train[0].shape)
-        print(x_train[0][0].shape)
+        # self.label_size = len(y_train[0])
+        # #self.time_steps = x_train.shape[1]
+       # self.feature_size = x_train.shape[2]
+        #
+        # print(self.label_size)
+        # print(x_train[0].shape)
+        # print(x_train[0][0].shape)
 
         lr_schedule = schedules.ExponentialDecay(
             initial_learning_rate=1e-2,
@@ -109,7 +136,7 @@ class LSTM_s:
 
         model = Sequential()
         model.add(
-            LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(self.time_steps, self.feature_size)))
+            LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(None, len(self.train_dataset[0][0]))))
         model.add(LSTM(64, recurrent_dropout=0.2))
         model.add(Flatten())
         model.add(Dropout(0.2))
