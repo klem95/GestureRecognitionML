@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 class LSTM_s:
 
     def __init__(self):
-        self.batch_size = 10
-        self.epochs = 200
+        self.batch_size = 40
+        self.epochs = 400
         self.learning_rate = 0.01
         self.label_size = 0
         self.dataPath = r'Data'
@@ -24,7 +24,7 @@ class LSTM_s:
         self.feature_size = 0
         self.testDataEvery = 10
 
-        self.validationDataEvery = 2
+        self.validationDataEvery = 5
 
         self.train_dataset = []
         self.validation_dataset = []
@@ -159,8 +159,9 @@ class LSTM_s:
 
         model = Sequential()
         model.add(
-            LSTM(150, return_sequences=True, recurrent_dropout=0.3, input_shape=(self.time_steps, self.feature_size)))
-        model.add(LSTM(64, recurrent_dropout=0.2))
+            LSTM(150, return_sequences=True, recurrent_dropout=0.1, input_shape=(30, self.feature_size)))
+        model.add(LSTM(100, return_sequences=True,  recurrent_dropout=0.2))
+        model.add(LSTM(32, recurrent_dropout=0.2))
         model.add(Flatten())
         model.add(Dropout(0.2))
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
