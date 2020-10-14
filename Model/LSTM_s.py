@@ -133,6 +133,8 @@ class LSTM_s:
         mappedFileNames = []
         for filename in file_names:
             mappedFileNames.append(filename[5:-7])
+            mappedFileNames
+
             # print(file_names)
         integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
         integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
