@@ -22,8 +22,7 @@ def main():
     elif args.m == cnn:
         cnn_n_lstm = CNN_n_LSTM(args.lr, args.bs, args.e, args.s)
         cnn_n_lstm.train_model()
-    #mymodel = BasicLstmModel(60,60)
-    #mymodel.train_model()
+
 
 if __name__ == "__main__":
     main()

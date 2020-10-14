@@ -1,7 +1,7 @@
 import numpy as np
 from keras.models import Sequential
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout, Conv3D
+from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout,Conv2D,MaxPooling2D, TimeDistributed
 from keras.optimizers import schedules
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
@@ -154,7 +154,11 @@ class CNN_n_LSTM:
             decay_rate=0.9)
 
         model = Sequential()
-        model.add(Conv3D(150, input_shape=(self.time_steps, self.feature_size, 1,1), kernel_size=5))
+        model.add(Conv2D(1, (2, 2), activation='relu', padding='same', input_shape=(10, 10, 1)))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Flatten())
+
+
         model.add(LSTM(100, return_sequences=True,  recurrent_dropout=0.2))
         model.add(LSTM(32, recurrent_dropout=0.2))
         model.add(Flatten())
