@@ -14,23 +14,23 @@ import matplotlib.pyplot as plt
 class LSTM_s:
 
     def __init__(self):
-        self.batch_size = 40
-        self.epochs = 400
+        self.batch_size = 100
+        self.epochs = 50
         self.learning_rate = 0.01
 
         self.label_size = 0
-        self.dataPath = r'Data'
+        self.dataPath = r'records'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
 
-        self.validationDataEvery = 5
+        self.validationDataEvery = 4
 
         self.train_dataset = []
         self.validation_dataset = []
         self.trainFiles = []
         self.validationFiles = []
-        self.time_steps = 15
+        self.time_steps = 60
 
 
     def biggestDocLength (self):
@@ -62,13 +62,22 @@ class LSTM_s:
                 appended += 1
                 sample.append(np.zeros(colCount).astype(float))
 
-        print('Length of APPENDED file samples: ' + str(len(sample)))
-        print('          APPENDED: ' + str(appended))
+        print('   APPENDED: ' + str(appended) + ' zero cols + to prev: ' + str((row_count)) )
         # print(np.asarray(sample).shape())
-        print(np.asarray(sample).shape[1])
         featSize = np.asarray(sample).shape[1]
         reshapedAsTimeSteps = np.asarray(sample).reshape((-1, self.time_steps, featSize))
-        return reshapedAsTimeSteps
+        print('   reshaped file into ' + str(reshapedAsTimeSteps.shape))
+
+        potentialLast = reshapedAsTimeSteps.shape[0]
+        for i in range(0, reshapedAsTimeSteps.shape[0]):
+            # print(reshapedAsTimeSteps[i][0][0])
+            if(reshapedAsTimeSteps[i][0][0] != 0.0):
+                potentialLast = i + 1
+                print("      " + str(reshapedAsTimeSteps[i][0][0]) + " - FOUND EMPTY - Potential last set to: " + str(i + 1))
+
+        print('   further reshaped into: ' + str(reshapedAsTimeSteps[:potentialLast].shape))
+
+        return reshapedAsTimeSteps[:potentialLast]
 
     def retrieve_data(self):
 
@@ -81,8 +90,8 @@ class LSTM_s:
 
         for filename in sorted(all_files):
             with open(filename, newline='') as csvfile:
-                print('file: ')
-                print(filename)
+                print('')
+                print('LOADING FILE: ' + filename)
                 firstLine = True
                 dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
                 sample = []
@@ -97,17 +106,19 @@ class LSTM_s:
 
 
                 reshapedAsTimeSteps = self.spliceTimeSteps(sample, row_count, largestRowCount, len(float_list))
-
+                print('DISTRIBUTING TIMESTEP SLICED SEQUENCES (' + filename + ')')
+                print('total slices: ' + str(len(reshapedAsTimeSteps)))
                 for j in range(0, len(reshapedAsTimeSteps)):
-                    if i % self.validationDataEvery == 0:
-                        print(len(reshapedAsTimeSteps))
+                    if j % self.validationDataEvery == 0:
+                        print('appending slice ' + str(j) + ' to validation')
                         self.validation_dataset.append(np.asarray(reshapedAsTimeSteps[j]))  # <--- 54 is a problem...
                         self.validationFiles.append(filename)
                     else:
+                        print('appending slice ' + str(j) + ' to training')
                         self.train_dataset.append(np.asarray(reshapedAsTimeSteps[j]))  # <--- 54 is a problem...
                         self.trainFiles.append(filename)
-
             i += 1
+
 
         print('validation files: ')
         print(len(self.validationFiles))
@@ -142,9 +153,9 @@ class LSTM_s:
         x_validation = np.asarray(self.validation_dataset)
         y_validation = np.asarray(self.onehotValidationLabels)
         print('y train one hot shape: ')
-        print(self.onehotValidationLabels)
+        print(self.onehotValidationLabels.shape)
         print('y validation one hot shape: ')
-        print(self.onehotValidationLabels)
+        print(self.onehotValidationLabels.shape)
 
         self.label_size = len(y_train[0])
         self.feature_size = x_train.shape[2]
@@ -164,14 +175,14 @@ class LSTM_s:
 
         print(x_train.shape)
 
-        pass
+        # return None
 
         model = Sequential()
         model.add(
             LSTM(150, return_sequences=True, recurrent_dropout=0.1, input_shape=(self.time_steps, self.feature_size)))
         model.add(LSTM(64, recurrent_dropout=0.2))
-        model.add(Dropout(0.2))
         model.add(Flatten())
+        model.add(Dropout(0.3))
         model.add(Dense(self.label_size, activation='softmax')) # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr_schedule),
                       metrics=['accuracy'])
