@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 Trained_models/
+.mdl_wts.hdf5
 
 # C extensions
 *.so
