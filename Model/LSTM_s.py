@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 class LSTM_s:
 
     def __init__(self):
-        self.batch_size = 100
+        self.batch_size = 50
         self.epochs = 50
-        self.learning_rate = 0.01
+        self.learning_rate = 0.5
 
         self.label_size = 0
-        self.dataPath = r'records'
+        self.dataPath = r'Data'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
@@ -54,6 +54,18 @@ class LSTM_s:
         return timeStepLength
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     def spliceTimeSteps (self, sample, row_count, largestRowCount, colCount):
         appended = 0
         for j in range(0, largestRowCount + 2):
@@ -71,13 +83,18 @@ class LSTM_s:
         potentialLast = reshapedAsTimeSteps.shape[0]
         for i in range(0, reshapedAsTimeSteps.shape[0]):
             # print(reshapedAsTimeSteps[i][0][0])
-            if(reshapedAsTimeSteps[i][0][0] != 0.0):
+            if(reshapedAsTimeSteps[i][0][1]):
                 potentialLast = i + 1
-                print("      " + str(reshapedAsTimeSteps[i][0][0]) + " - FOUND EMPTY - Potential last set to: " + str(i + 1))
+                print("      " + str(reshapedAsTimeSteps[i][0][1]) + " - FOUND EMPTY - Potential last set to: " + str(i + 1))
 
         print('   further reshaped into: ' + str(reshapedAsTimeSteps[:potentialLast].shape))
 
         return reshapedAsTimeSteps[:potentialLast]
+
+
+
+
+
 
     def retrieve_data(self):
 
@@ -94,7 +111,7 @@ class LSTM_s:
                 print('LOADING FILE: ' + filename)
                 firstLine = True
                 dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
-                sample = []
+                sequence = []
                 row_count = 0
                 for row in dataScanner:
                     row_count += 1
@@ -102,10 +119,10 @@ class LSTM_s:
                         firstLine = False
                         continue
                     float_list = [float(s.replace(',', '')) for s in row]
-                    sample.append(np.asarray(float_list).astype(float))
+                    sequence.append(np.asarray(float_list).astype(float))
 
 
-                reshapedAsTimeSteps = self.spliceTimeSteps(sample, row_count, largestRowCount, len(float_list))
+                reshapedAsTimeSteps = self.spliceTimeSteps(sequence, row_count, largestRowCount, len(float_list))
                 print('DISTRIBUTING TIMESTEP SLICED SEQUENCES (' + filename + ')')
                 print('total slices: ' + str(len(reshapedAsTimeSteps)))
                 for j in range(0, len(reshapedAsTimeSteps)):
@@ -124,17 +141,40 @@ class LSTM_s:
         print(len(self.validationFiles))
         print('train files: ')
         print(len(self.trainFiles))
+
+
+
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)
         self.onehotTrainLabels = self.encode_labels(self.trainFiles)
         self.onehotValidationLabels = self.encode_labels(self.validationFiles)
+        for i in range(0, len(self.trainFiles)):
+            print('file: ')
+            print(self.trainFiles[i])
+            print('label: ')
+            print(self.onehotTrainLabels[i])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def encode_labels(self, file_names):
         mappedFileNames = []
         for filename in file_names:
-            mappedFileNames.append(filename[5:-7])
-            mappedFileNames
+            mappedFileNames.append(filename[7:-6])
 
+        print(mappedFileNames)
             # print(file_names)
         integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
         integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
@@ -144,60 +184,64 @@ class LSTM_s:
 
     def train_model(self):
         self.retrieve_data()
-        print('train data shape:')
-        print(np.asarray(self.train_dataset).shape)
-
-        print('validation data shape:')
-        print(np.asarray(self.validation_dataset).shape)
 
         x_train = np.asarray(self.train_dataset)
         y_train = np.asarray(self.onehotTrainLabels)
         x_validation = np.asarray(self.validation_dataset)
         y_validation = np.asarray(self.onehotValidationLabels)
+
+
+
+        print('train data shape:')
+        print(np.asarray(self.train_dataset).shape)
+        print('validation data shape:')
+        print(np.asarray(self.validation_dataset).shape)
         print('y train one hot shape: ')
-        print(self.onehotValidationLabels.shape)
+        print(self.onehotTrainLabels)
         print('y validation one hot shape: ')
-        print(self.onehotValidationLabels.shape)
+        print(self.onehotValidationLabels)
+
+
+
 
         self.label_size = len(y_train[0])
         self.feature_size = x_train.shape[2]
 
-        # print(self.label_size)
-        # print(x_train[0].shape)
-        # print(x_train[0][0].shape)
+        print('feature_size: ')
+        print(self.feature_size)
+        print(x_train[0].shape)
+        print("Printed model")
+        for x in x_train[0]:
+            print( "%.6f" % x)
+
+        print('SHAPE: ')
+        print(x_train.shape)
 
         mcp_save = ModelCheckpoint('.mdl_wts.hdf5', save_best_only=True, monitor='val_loss', mode='min')
 
-        lr_schedule = schedules.ExponentialDecay(
-            initial_learning_rate=self.learning_rate,
-            decay_steps=10000,
-            decay_rate=0.5
-        )
-
-
-        print(x_train.shape)
 
         # return None
 
         model = Sequential()
         model.add(
             LSTM(150, return_sequences=True, recurrent_dropout=0.1, input_shape=(self.time_steps, self.feature_size)))
-        model.add(LSTM(64, recurrent_dropout=0.2))
+        model.add(LSTM(32, recurrent_dropout=0.3))
         model.add(Flatten())
-        model.add(Dropout(0.3))
+       # model.add(Dropout(0.3))
         model.add(Dense(self.label_size, activation='softmax')) # Classification
-        model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr_schedule),
+        model.compile(loss='categorical_crossentropy', optimizer=Adam(),
                       metrics=['accuracy'])
 
         model.summary()
 
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
+        print(history.history.keys())
 
         plt.title('Loss')
         print(mcp_save.best)
-        plt.plot(history.history['loss'], label='train')
-        plt.plot(history.history['val_loss'], label='validation')
+        plt.plot(history.history['accuracy'], label='train')
+        plt.plot(history.history['val_accuracy'], label='validation')
         plt.legend()
         plt.show()
 

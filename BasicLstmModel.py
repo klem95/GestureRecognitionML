@@ -75,7 +75,7 @@ class BasicLstmModel:
 
     def train_model(self):
         xTrain = np.asarray(self.dfs)
-        xTrain = xTrain.reshape(xTrain.shape[0],1,xTrain.shape[1])
+        xTrain = xTrain.reshape(xTrain.shape[0], 1, xTrain.shape[1])
         yTrain = np.asarray(self.onehotLabels).astype(float)
 
         xValidate = np.asarray(self.dfs)
