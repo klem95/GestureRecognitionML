@@ -12,7 +12,7 @@ def main():
     parser.add_argument("-m", metavar='m', type=str, default=lstm)
     parser.add_argument("-lr", metavar='l', type=float, default=0.5)
     parser.add_argument("-bs", metavar='bs', type=int, default=400)
-    parser.add_argument("-e", metavar='e', type=int, default=100)
+    parser.add_argument("-e", metavar='e', type=int, default=20)
     parser.add_argument("-s", metavar='s', type=int, default=4)  # The data split
     args = parser.parse_args()
 

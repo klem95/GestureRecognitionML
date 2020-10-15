@@ -19,7 +19,7 @@ class CNN_n_LSTM:
         self.epochs = 400 if e is None else e
         self.validationDataEvery = 5 if split is None else split
         self.label_size = 0
-        self.dataPath = r'splitRecords'
+        self.dataPath = r'records'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
@@ -149,34 +149,40 @@ class CNN_n_LSTM:
 
         model = Sequential()
 
-        model.add(Conv3D(20, activation='relu', kernel_initializer='he_uniform', input_shape=(joints, frames, coords, channels), kernel_size=(3, 3, 3)))
-        model.add(MaxPooling3D(pool_size=(3, 3, 1)))
+        model.add(Conv3D(20,
+                         activation='tanh',
+                         kernel_initializer='he_uniform',
+                         data_format='channels_last',
+                         input_shape=(joints, frames, coords, channels),
+                         kernel_size=(3, 3, 1)))
+        model.add(MaxPooling3D(pool_size=(2, 2, 1), data_format='channels_last', ))
         model.add(Dropout(0.2))
-        model.add(Conv3D(64, kernel_size=(3, 3, 1), activation='relu', kernel_initializer='he_uniform'))
+        model.add(Conv3D(50, kernel_size=(2, 2, 1),  activation='tanh'))
         model.add(MaxPooling3D(pool_size=(2, 2, 1)))
-        model.add(Dropout(0.2))
+        model.add(Conv3D(100, kernel_size=(3, 3, 1),  activation='tanh'))
+        model.add(MaxPooling3D(pool_size=(2, 2, 1)))
 
-        model.add(Flatten())
         model.add(Dropout(0.2))
-        model.add(Dense(self.label_size, activation='softmax'))  # Classification
+        model.add(Dense(300))
+        model.add(Dropout(0.2))
+        model.add(Dense(100))
+        model.add(Flatten())
+
+        model.add(Dense(self.label_size, activation='softmax')) # Classification
+        model.compile(loss='categorical_crossentropy', optimizer=Adam(),
+                      metrics=['accuracy'])
+
         model.summary()
 
-        model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr_schedule),
-                      metrics=['accuracy', 'AUC'])
-
-
-        history = model.fit(x_train,
-                            y_train,
-                            epochs=self.epochs,
-                            batch_size=self.batch_size,
-                            validation_data=(x_validation, y_validation),
-                            callbacks=[mcp_save])
+        history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
+                            validation_data=(x_validation, y_validation), callbacks=[mcp_save])
+        print(history.history.keys())
 
         plt.title('Loss')
-        plt.plot(history.history['loss'], label='train')
-        plt.plot(history.history['val_loss'], label='validation')
+        print(mcp_save.best)
+        plt.plot(history.history['accuracy'], label='train')
+        plt.plot(history.history['val_accuracy'], label='validation')
         plt.legend()
         plt.show()
-
 
         model.save(self.trained_model_path, 'Lstm_s')
