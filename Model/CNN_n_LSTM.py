@@ -19,11 +19,10 @@ class CNN_n_LSTM:
         self.epochs = 400 if e is None else e
         self.validationDataEvery = 5 if split is None else split
         self.label_size = 0
-        self.dataPath = r'Data'
+        self.dataPath = r'splitRecords'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
-        self.testDataEvery = 10
 
 
         self.train_dataset = []
@@ -79,10 +78,10 @@ class CNN_n_LSTM:
                 trsnposed = np.transpose(np.asarray(frames), (1, 0, 2))
                 print('(t, j, coords)')
                 trsnposed = trsnposed.reshape((trsnposed.shape[0], trsnposed.shape[1], trsnposed.shape[2], 1))
-                print(trsnposed.shape)
 
                 result = np.zeros((trsnposed.shape[0], largestFrameCount, trsnposed.shape[2], trsnposed.shape[3]))
                 result[:trsnposed.shape[0], :trsnposed.shape[1], : trsnposed.shape[2], :trsnposed.shape[3]] = trsnposed
+                print(np.asarray(result).shape)
 
 
                 if i % self.validationDataEvery == 0:
@@ -150,12 +149,12 @@ class CNN_n_LSTM:
 
         model = Sequential()
 
-        model.add(Conv3D(20, activation='relu', input_shape=(joints, frames, coords, channels), kernel_size=(3, 3, 3)))
-        # model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=None, padding="valid"))
-        # model.add(Dropout(0.5))
-        # model.add(Conv3D(64, kernel_size=(3, 3, 3), activation='relu', kernel_initializer='he_uniform'))
-        # model.add(MaxPooling3D(pool_size=(2, 2, 2)))
-        # model.add(Dropout(0.5))
+        model.add(Conv3D(20, activation='relu', kernel_initializer='he_uniform', input_shape=(joints, frames, coords, channels), kernel_size=(3, 3, 3)))
+        model.add(MaxPooling3D(pool_size=(3, 3, 1)))
+        model.add(Dropout(0.2))
+        model.add(Conv3D(64, kernel_size=(3, 3, 1), activation='relu', kernel_initializer='he_uniform'))
+        model.add(MaxPooling3D(pool_size=(2, 2, 1)))
+        model.add(Dropout(0.2))
 
         model.add(Flatten())
         model.add(Dropout(0.2))
