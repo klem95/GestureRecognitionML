@@ -19,7 +19,7 @@ class CNN_n_LSTM:
         self.epochs = 400 if e is None else e
         self.validationDataEvery = 5 if split is None else split
         self.label_size = 0
-        self.dataPath = r'Data'
+        self.dataPath = r'splitRecords'
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
         self.feature_size = 0
@@ -73,7 +73,7 @@ class CNN_n_LSTM:
                         firstLine = False
                         continue
                     float_list = [float(s.replace(',', '')) for s in row]
-                    sample.append(np.asarray(float_list).astype(float))
+                    sample.append(np.asarray(float_list[:-1]).astype(float))
 
                 #print('Length of ORIGINAL file samples: ' + str(len(sample)))
 
@@ -154,10 +154,6 @@ class CNN_n_LSTM:
             decay_rate=0.9)
 
         model = Sequential()
-        model.add(Conv2D(1, (2, 2), activation='relu', padding='same', input_shape=(10, 10, 1)))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Flatten())
-
 
         model.add(LSTM(100, return_sequences=True,  recurrent_dropout=0.2))
         model.add(LSTM(32, recurrent_dropout=0.2))
@@ -166,11 +162,9 @@ class CNN_n_LSTM:
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr_schedule),
                       metrics=['accuracy', 'AUC'])
-
-        model.summary()
-
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
+        model.summary()
 
         plt.title('Loss')
         plt.plot(history.history['loss'], label='train')

@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 class LSTM_s:
 
     def __init__(self):
-        self.batch_size = 100
-        self.epochs = 50
+        self.batch_size = 200
+        self.epochs = 200
         self.learning_rate = 0.01
 
         self.label_size = 0
@@ -170,8 +170,8 @@ class LSTM_s:
 
         lr_schedule = schedules.ExponentialDecay(
             initial_learning_rate=self.learning_rate,
-            decay_steps=10000,
-            decay_rate=0.5
+            decay_steps=20000,
+            decay_rate=0.9
         )
 
 
@@ -182,7 +182,8 @@ class LSTM_s:
         model = Sequential()
         model.add(
             LSTM(150, return_sequences=True, recurrent_dropout=0.1, input_shape=(self.time_steps, self.feature_size)))
-        model.add(LSTM(64, recurrent_dropout=0.2))
+        model.add(LSTM(64,return_sequences=True,  recurrent_dropout=0.2))
+        model.add(LSTM(64, recurrent_dropout=0.4))
         model.add(Flatten())
         model.add(Dropout(0.3))
         model.add(Dense(self.label_size, activation='softmax')) # Classification
