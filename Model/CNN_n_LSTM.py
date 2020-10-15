@@ -112,7 +112,7 @@ class CNN_n_LSTM:
     def encode_labels(self, file_names):
         mappedFileNames = []
         for filename in file_names:
-            mappedFileNames.append(filename[5:-7])
+            mappedFileNames.append(filename.split("_")[0])
             # print(file_names)
         integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
         integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
@@ -151,7 +151,7 @@ class CNN_n_LSTM:
         model = Sequential()
 
         model.add(Conv3D(20, activation='relu', input_shape=(joints, frames, coords, channels), kernel_size=(3, 3, 3)))
-        model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=None, padding="valid"))
+        # model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=None, padding="valid"))
         # model.add(Dropout(0.5))
         # model.add(Conv3D(64, kernel_size=(3, 3, 3), activation='relu', kernel_initializer='he_uniform'))
         # model.add(MaxPooling3D(pool_size=(2, 2, 2)))
