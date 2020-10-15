@@ -9,19 +9,20 @@ from sklearn.preprocessing import OneHotEncoder
 import glob2
 import csv
 import matplotlib.pyplot as plt
+from numpy import load, save
 
 
 class CNN_n_LSTM:
 
-    def __init__(self, lr, bs, e, split):
+    def __init__(self, lr, bs, e, split, f):
         self.batch_size = 2
         self.learning_rate = 0.01 if lr is None else lr
         self.epochs = 400 if e is None else e
         self.validationDataEvery = 5 if split is None else split
         self.label_size = 0
-        self.dataPath = r'records'
+        self.dataPath = 'Data' if f is None else f
         self.trained_model_path = 'Trained_models'  # use your path
-        self.time_steps = 0
+        self.time_steps = 0                                                             
         self.feature_size = 0
 
 
@@ -46,6 +47,19 @@ class CNN_n_LSTM:
         return biggestRowCount
 
 
+    def loadFromBuffer(self):
+        try:
+            npObject = load('numpy-buffers/' + self.dataPath + '-npBuffer.npy', allow_pickle=True)
+            print('buffer loaded')
+            return npObject
+        except:
+            print('no buffer')
+            return False
+
+
+    def bufferFile(self, npObject):
+        print('saving data to buffer')
+        save('numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
 
 
     def preprocess(self):
@@ -75,12 +89,12 @@ class CNN_n_LSTM:
                     frames.append(np.asarray(joints).astype(float))
                     frame_count += 1
 
-                trsnposed = np.transpose(np.asarray(frames), (1, 0, 2))
+                transposed = np.transpose(np.asarray(frames), (1, 0, 2))
                 print('(t, j, coords)')
-                trsnposed = trsnposed.reshape((trsnposed.shape[0], trsnposed.shape[1], trsnposed.shape[2], 1))
+                transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
-                result = np.zeros((trsnposed.shape[0], largestFrameCount, trsnposed.shape[2], trsnposed.shape[3]))
-                result[:trsnposed.shape[0], :trsnposed.shape[1], : trsnposed.shape[2], :trsnposed.shape[3]] = trsnposed
+                result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
+                result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
                 print(np.asarray(result).shape)
 
 
@@ -92,21 +106,16 @@ class CNN_n_LSTM:
                     self.trainFiles.append(filename)
 
             i += 1
-        print('train_dataset set')
-        print(np.asarray(self.train_dataset).shape)
         #print(np.asarray(self.trainFiles).shape)
         self.label_encoder = LabelEncoder()
         self.oneHot_encoder = OneHotEncoder(sparse=False)
         self.onehotTrainLabels = self.encode_labels(self.trainFiles)
         self.onehotValidationLabels = self.encode_labels(self.validationFiles)
-        print('onehot:')
+        print('train_dataset shape')
+        print(np.asarray(self.train_dataset).shape)
+        print('traning onehot shape:')
         print(np.asarray(self.onehotTrainLabels).shape)
-    #   def date_evaluation(self):
-    #      for sample in self.total_dataset:
-    #           for row in sample:
-    #              for val in row:
-    #                 if type(val) is not np.float:
-    # print(type(val))
+
 
     def encode_labels(self, file_names):
         mappedFileNames = []
@@ -120,14 +129,29 @@ class CNN_n_LSTM:
         return onehot_encoded
 
     def train_model(self):
-        print('CNN')
-        self.preprocess()
+        print('CNN Model')
 
-        x_train = np.asarray(self.train_dataset)
-        y_train = np.asarray(self.onehotTrainLabels)
+        x_train = None
+        y_train = None
+        x_validation = None
+        y_validation = None
 
-        x_validation = np.asarray(self.validation_dataset)
-        y_validation = np.asarray(self.onehotValidationLabels)
+        bufferedNumpy = self.loadFromBuffer()
+
+        if(bufferedNumpy != False):
+            print('Preprocessing files')
+            x_train = bufferedNumpy[0]
+            y_train = bufferedNumpy[1]
+            x_validation = bufferedNumpy[2]
+            y_validation = bufferedNumpy[3]
+        else:
+            self.preprocess()
+            x_train = np.asarray(self.train_dataset)
+            y_train = np.asarray(self.onehotTrainLabels)
+            x_validation = np.asarray(self.validation_dataset)
+            y_validation = np.asarray(self.onehotValidationLabels)
+            self.bufferFile(np.asarray([x_train, y_train, x_validation, y_validation]))
+
 
 
         sequence = x_train.shape[0]
