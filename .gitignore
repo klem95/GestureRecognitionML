@@ -5,7 +5,6 @@ __pycache__/
 
 Trained_models/
 numpy-buffers/
-.mdl_wts.hdf5
 
 # C extensions
 *.so
