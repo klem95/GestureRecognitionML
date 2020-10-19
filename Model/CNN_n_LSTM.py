@@ -246,7 +246,6 @@ class CNN_n_LSTM:
         # load weights into new model
         loaded_model.load_weights("saved-models/model.h5")
         print("Loaded model from disk")
-        loaded_model = self.loadModel()
         loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
         return loaded_model
@@ -254,8 +253,10 @@ class CNN_n_LSTM:
 
 
     def predict(self, data):
-        formattedData = self.format(data)
-
-        score = self.model.predict(formattedData, verbose=0)
+        formattedData = self.format(data, False)
+        shape = np.asarray([formattedData])
+        print('predict shape')
+        print(shape.shape)
+        score = self.model.predict(shape, verbose=0)
         print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
         return score
