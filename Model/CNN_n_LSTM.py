@@ -56,7 +56,7 @@ class CNN_n_LSTM:
 
     def loadFromBuffer(self):
         try:
-            npObject = load('numpy-buffers/' + self.dataPath + '-npBuffer.npy', allow_pickle=True)
+            npObject = load('GestureRecoGnitionML/numpy-buffers/' + self.dataPath + '-npBuffer.npy', allow_pickle=True)
             print('buffer loaded')
             return npObject
         except:
@@ -71,9 +71,6 @@ class CNN_n_LSTM:
     def format(self, chunk, zeroPad=True):
         # chunk = chunk.
         largestFrameCount = self.biggestDocLength()
-        print('largestFrameCount')
-        print(chunk.shape)
-        print(largestFrameCount)
 
         frames = []
         frame_count = 0
@@ -92,7 +89,6 @@ class CNN_n_LSTM:
             frame_count += 1
 
         transposed = np.transpose(np.asarray(frames), (1, 0, 2))
-        print('(t, j, coords)')
         transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
         if(zeroPad):
@@ -249,12 +245,12 @@ class CNN_n_LSTM:
         print("Saved model to disk")
 
     def loadModel(self):
-        json_file = open('saved-models/model.json', 'r')
+        json_file = open('GestureRecognitionML/saved-models/model.json', 'r')
         loaded_model_json = json_file.read()
         json_file.close()
         loaded_model = model_from_json(loaded_model_json)
         # load weights into new model
-        loaded_model.load_weights("saved-models/bestWeights.h5")
+        loaded_model.load_weights("GestureRecognitionML/saved-models/model.h5")
         print("Loaded model from disk")
         loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
@@ -265,8 +261,7 @@ class CNN_n_LSTM:
     def predict(self, data):
         formattedData = self.format(data, False)
         shape = np.asarray([formattedData])
-        print('predict shape')
-        print(shape.shape)
+
         score = self.model.predict(shape, verbose=0)
 
         print('score:')
