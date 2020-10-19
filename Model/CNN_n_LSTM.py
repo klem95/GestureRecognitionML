@@ -14,7 +14,7 @@ from numpy import load, save, genfromtxt
 
 class CNN_n_LSTM:
 
-    def __init__(self, lr, bs, e, split, f):
+    def __init__(self, lr, bs, e, split, f, loadModel=False):
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
         self.epochs = 400 if e is None else e
@@ -30,6 +30,11 @@ class CNN_n_LSTM:
         self.validation_dataset = []
         self.trainFiles = []
         self.validationFiles = []
+
+        if (loadModel):
+            self.model = self.loadModel()
+        else:
+            self.model = None
 
 
     def biggestDocLength (self):
@@ -61,7 +66,7 @@ class CNN_n_LSTM:
         print('saving data to buffer')
         save('numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
 
-    def format(self, chunk):
+    def format(self, chunk, zeroPad=True):
         # chunk = chunk.
         largestFrameCount = self.biggestDocLength()
         print('largestFrameCount')
@@ -88,9 +93,12 @@ class CNN_n_LSTM:
         print('(t, j, coords)')
         transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
-        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
-        result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
-        print(np.asarray(result).shape)
+        if(zeroPad):
+            result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
+            result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
+            print(np.asarray(result).shape)
+        else:
+            result = transposed
         return result
 
 
@@ -238,13 +246,16 @@ class CNN_n_LSTM:
         # load weights into new model
         loaded_model.load_weights("saved-models/model.h5")
         print("Loaded model from disk")
+        loaded_model = self.loadModel()
+        loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+
         return loaded_model
+
 
 
     def predict(self, data):
         formattedData = self.format(data)
-        loaded_model = self.loadModel()
-        loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-        score = loaded_model.predict(formattedData, verbose=0)
-        print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
+
+        score = self.model.predict(formattedData, verbose=0)
+        print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
         return score
