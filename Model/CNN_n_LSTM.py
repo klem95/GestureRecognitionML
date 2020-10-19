@@ -14,7 +14,8 @@ from numpy import load, save, genfromtxt
 
 class CNN_n_LSTM:
 
-    def __init__(self, lr, bs, e, split, f, loadModel=False):
+    def __init__(self, lr, bs, e, split, f, loadModel=False, path = ''):
+        self.path = path
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
         self.epochs = 400 if e is None else e
@@ -24,6 +25,7 @@ class CNN_n_LSTM:
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0                                                             
         self.feature_size = 0
+        self.labels = []
 
 
         self.train_dataset = []
@@ -132,6 +134,11 @@ class CNN_n_LSTM:
         print('traning onehot shape:')
         print(np.asarray(self.onehotTrainLabels).shape)
 
+        for encodes in range(0, 3):
+            inverted = self.label_encoder.inverse_transform(encodes)
+            print('label 1')
+            print(inverted)
+
 
 
     def encode_labels(self, file_names):
@@ -140,8 +147,11 @@ class CNN_n_LSTM:
             mappedFileNames.append(filename.split("_")[0])
             # print(file_names)
         integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
+        print(integer_encoded)
+        print(mappedFileNames)
         integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
         onehot_encoded = self.oneHot_encoder.fit_transform(integer_encoded)
+
 
         return onehot_encoded
 
@@ -197,7 +207,7 @@ class CNN_n_LSTM:
                          data_format='channels_last',
                          input_shape=(joints, frames, coords, channels),
                          kernel_size=(3, 3, 1)))
-        model.add(MaxPooling3D(pool_size=(2, 2, 1), data_format='channels_last', ))
+        model.add(MaxPooling3D(pool_size=(2, 2, 1), strides=(1,1,1), data_format='channels_last', ))
         model.add(Dropout(0.2))
         model.add(Conv3D(50, kernel_size=(2, 2, 1),  activation='tanh'))
         model.add(MaxPooling3D(pool_size=(2, 2, 1)))
@@ -221,8 +231,8 @@ class CNN_n_LSTM:
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
         print(history.history.keys())
         print(mcp_save.best)
-        plt.plot(history.history['accuracy'], label='train')
-        plt.plot(history.history['val_accuracy'], label='validation')
+        plt.plot(history.history['loss'], label='train')
+        plt.plot(history.history['val_loss'], label='validation')
         plt.legend()
         plt.show()
 
@@ -244,7 +254,7 @@ class CNN_n_LSTM:
         json_file.close()
         loaded_model = model_from_json(loaded_model_json)
         # load weights into new model
-        loaded_model.load_weights("saved-models/model.h5")
+        loaded_model.load_weights("saved-models/bestWeights.h5")
         print("Loaded model from disk")
         loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
@@ -258,6 +268,7 @@ class CNN_n_LSTM:
         print('predict shape')
         print(shape.shape)
         score = self.model.predict(shape, verbose=0)
+
         print('score:')
         print(score)
         # print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
