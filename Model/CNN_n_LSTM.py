@@ -9,7 +9,7 @@ from sklearn.preprocessing import OneHotEncoder
 import glob2
 import csv
 import matplotlib.pyplot as plt
-from numpy import load, save
+from numpy import load, save, genfromtxt
 
 
 class CNN_n_LSTM:
@@ -38,9 +38,9 @@ class CNN_n_LSTM:
         for filename in all_files:
             with open(filename, newline='') as csvfile:
                 length = 0
-                dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
+                data = genfromtxt(csvfile, delimiter=';')
 
-                for row in dataScanner:
+                for row in data:
                     length += 1
                 if(length > biggestRowCount):
                     biggestRowCount = length
@@ -62,8 +62,10 @@ class CNN_n_LSTM:
         save('numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
 
     def format(self, chunk):
+        # chunk = chunk.
         largestFrameCount = self.biggestDocLength()
         print('largestFrameCount')
+        print(chunk.shape)
         print(largestFrameCount)
 
         frames = []
@@ -99,9 +101,10 @@ class CNN_n_LSTM:
         for filename in sorted(all_files):
             with open(filename, newline='') as csvfile:
                 print('loading: ' + filename)
-                dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
+                # dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
+                data = genfromtxt(csvfile, delimiter=';')
 
-                result = self.format(dataScanner)
+                result = self.format(data)
 
                 if i % self.validationDataEvery == 0:
                     self.validation_dataset.append(result)
