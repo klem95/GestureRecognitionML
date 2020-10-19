@@ -205,7 +205,7 @@ class CNN_n_LSTM:
 
         model.summary()
 
-        mcp_save = ModelCheckpoint('.mdl_wts.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint('saved-models/bestWeights.h5', save_best_only=True, monitor='val_loss', mode='min')
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
         print(history.history.keys())
