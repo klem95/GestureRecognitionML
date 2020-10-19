@@ -89,6 +89,7 @@ class CNN_n_LSTM:
         result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
         result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
         print(np.asarray(result).shape)
+        return result
 
 
     def preprocess(self):
@@ -243,4 +244,4 @@ class CNN_n_LSTM:
         loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
         score = loaded_model.predict(formattedData, verbose=0)
         print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
-        return None
+        return score
