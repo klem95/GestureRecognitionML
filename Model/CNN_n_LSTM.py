@@ -9,12 +9,12 @@ from sklearn.preprocessing import OneHotEncoder
 import glob2
 import csv
 import matplotlib.pyplot as plt
-from numpy import load, save
+from numpy import load, save, genfromtxt
 
 
 class CNN_n_LSTM:
 
-    def __init__(self, lr, bs, e, split, f):
+    def __init__(self, lr, bs, e, split, f, loadModel=False):
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
         self.epochs = 400 if e is None else e
@@ -31,6 +31,11 @@ class CNN_n_LSTM:
         self.trainFiles = []
         self.validationFiles = []
 
+        if (loadModel):
+            self.model = self.loadModel()
+        else:
+            self.model = None
+
 
     def biggestDocLength (self):
         all_files = glob2.glob(self.dataPath + "/*.csv")
@@ -38,9 +43,9 @@ class CNN_n_LSTM:
         for filename in all_files:
             with open(filename, newline='') as csvfile:
                 length = 0
-                dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
+                data = genfromtxt(csvfile, delimiter=';')
 
-                for row in dataScanner:
+                for row in data:
                     length += 1
                 if(length > biggestRowCount):
                     biggestRowCount = length
@@ -61,9 +66,11 @@ class CNN_n_LSTM:
         print('saving data to buffer')
         save('numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
 
-    def format(self, chunk):
+    def format(self, chunk, zeroPad=True):
+        # chunk = chunk.
         largestFrameCount = self.biggestDocLength()
         print('largestFrameCount')
+        print(chunk.shape)
         print(largestFrameCount)
 
         frames = []
@@ -86,9 +93,12 @@ class CNN_n_LSTM:
         print('(t, j, coords)')
         transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
-        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
-        result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
-        print(np.asarray(result).shape)
+        if(zeroPad):
+            result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
+            result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
+            print(np.asarray(result).shape)
+        else:
+            result = transposed
         return result
 
 
@@ -99,9 +109,10 @@ class CNN_n_LSTM:
         for filename in sorted(all_files):
             with open(filename, newline='') as csvfile:
                 print('loading: ' + filename)
-                dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
+                # dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
+                data = genfromtxt(csvfile, delimiter=';')
 
-                result = self.format(dataScanner)
+                result = self.format(data)
 
                 if i % self.validationDataEvery == 0:
                     self.validation_dataset.append(result)
@@ -235,13 +246,16 @@ class CNN_n_LSTM:
         # load weights into new model
         loaded_model.load_weights("saved-models/model.h5")
         print("Loaded model from disk")
+        loaded_model = self.loadModel()
+        loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+
         return loaded_model
+
 
 
     def predict(self, data):
         formattedData = self.format(data)
-        loaded_model = self.loadModel()
-        loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-        score = loaded_model.predict(formattedData, verbose=0)
-        print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1] * 100))
+
+        score = self.model.predict(formattedData, verbose=0)
+        print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
         return score
