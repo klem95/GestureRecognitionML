@@ -258,5 +258,7 @@ class CNN_n_LSTM:
         print('predict shape')
         print(shape.shape)
         score = self.model.predict(shape, verbose=0)
-        print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
+        print('score:')
+        print(score)
+        # print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
         return score

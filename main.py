@@ -27,7 +27,7 @@ def main():
         if(args.loadModel == False):
             cnn_n_lstm.train_model()
         else:
-            data = np.zeros((120, 289))
+            data = np.zeros((121, 289))
             print(data.shape)
             cnn_n_lstm.predict(data)
 
