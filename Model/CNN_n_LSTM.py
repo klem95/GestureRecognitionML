@@ -23,7 +23,7 @@ class CNN_n_LSTM:
         self.label_size = 0
         self.dataPath = 'Data' if f is None else f
         self.trained_model_path = 'Trained_models'  # use your path
-        self.time_steps = 0                                                             
+        self.time_steps = 0
         self.feature_size = 0
         self.labels = []
 
@@ -56,7 +56,7 @@ class CNN_n_LSTM:
 
     def loadFromBuffer(self):
         try:
-            npObject = load('GestureRecoGnitionML/numpy-buffers/' + self.dataPath + '-npBuffer.npy', allow_pickle=True)
+            npObject = load(self.path + 'numpy-buffers/' + self.dataPath + '-npBuffer.npy', allow_pickle=True)
             print('buffer loaded')
             return npObject
         except:
@@ -66,10 +66,10 @@ class CNN_n_LSTM:
 
     def bufferFile(self, npObject):
         print('saving data to buffer')
-        save('numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
+        save(self.path + 'numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
 
     def format(self, chunk, zeroPad=True):
-        # chunk = chunk.
+
         largestFrameCount = self.biggestDocLength()
 
         frames = []
@@ -222,7 +222,7 @@ class CNN_n_LSTM:
 
         model.summary()
 
-        mcp_save = ModelCheckpoint('saved-models/bestWeights.h5', save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint(self.path + 'saved-models/bestWeights.h5', save_best_only=True, monitor='val_loss', mode='min')
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
         print(history.history.keys())
@@ -238,19 +238,19 @@ class CNN_n_LSTM:
 
     def saveModel(self, model):
         model_json = model.to_json()
-        with open("saved-models/model.json", "w") as json_file:
+        with open(self.path + "saved-models/model.json", "w") as json_file:
             json_file.write(model_json)
         # serialize weights to HDF5
-        model.save_weights("saved-models/model.h5")
+        model.save_weights(self.path + "saved-models/model.h5")
         print("Saved model to disk")
 
     def loadModel(self):
-        json_file = open('GestureRecognitionML/saved-models/model.json', 'r')
+        json_file = open(self.path + 'saved-models/model.json', 'r')
         loaded_model_json = json_file.read()
         json_file.close()
         loaded_model = model_from_json(loaded_model_json)
         # load weights into new model
-        loaded_model.load_weights("GestureRecognitionML/saved-models/model.h5")
+        loaded_model.load_weights(self.path + "saved-models/model.h5")
         print("Loaded model from disk")
         loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
