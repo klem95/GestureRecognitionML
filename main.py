@@ -6,6 +6,7 @@ import numpy as np
 
 lstm = "lstm"
 cnn = "cnn"
+cnn_lstm = "cnn_lstm"
 
 def main():
 
