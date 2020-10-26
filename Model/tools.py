@@ -13,7 +13,6 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True):
     frames = []
     frame_count = 0
     firstLine = removeFirstLine
-    print('format 1')
     for frame in chunk:
         if firstLine:
             firstLine = False
@@ -28,14 +27,11 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True):
         frame_count += 1
 
     transposed = np.transpose(np.asarray(frames), (1, 0, 2))
-    print('ts shape')
-    print(transposed.shape)
     transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
     if (zeroPad):
         result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
         result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
-        print(np.asarray(result).shape)
     else:
         result = transposed
     return result
