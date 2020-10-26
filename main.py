@@ -10,11 +10,11 @@ cnn = "cnn"
 def main():
 
     parser = argparse.ArgumentParser(description="AI Model Specifications")
-    parser.add_argument("-m", metavar='m', type=str, default=lstm)
+    parser.add_argument("-m", metavar='m', type=str, default=cnn)
     parser.add_argument("-lr", metavar='l', type=float, default=0.5)
     parser.add_argument("-bs", metavar='bs', type=int, default=400)
     parser.add_argument("-e", metavar='e', type=int, default=20)
-    parser.add_argument("-f", metavar='f', type=str, default='records')
+    parser.add_argument("-f", metavar='f', type=str, default='splitRecords')
     parser.add_argument("--loadModel", metavar='loadModel', type=bool, default=False)
     parser.add_argument("-s", metavar='s', type=int, default=4)  # The data split
     args = parser.parse_args()
@@ -27,9 +27,11 @@ def main():
         if(args.loadModel == False):
             cnn_n_lstm.train_model()
         else:
-            data = np.zeros((121, 289))
+            columnSize = 120
+            data = np.zeros((30, 289))
             print(data.shape)
-            cnn_n_lstm.predict(data)
+            prediction = cnn_n_lstm.predict(data, True, columnSize)
+            print(prediction)
 
 
 

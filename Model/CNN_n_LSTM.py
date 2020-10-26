@@ -40,17 +40,17 @@ class CNN_n_LSTM:
 
     def biggestDocLength (self):
         all_files = glob2.glob(self.dataPath + "/*.csv")
-        biggestRowCount = 0
+        biggestRowCount = -1
         for filename in all_files:
+            print(filename)
             with open(filename, newline='') as csvfile:
-                length = 0
                 data = genfromtxt(csvfile, delimiter=';')
-
-                for row in data:
-                    length += 1
+                length = len(data.tolist())
                 if(length > biggestRowCount):
                     biggestRowCount = length
-        return biggestRowCount
+        print('biggest row')
+        print(biggestRowCount - 1)
+        return biggestRowCount - 1 # -1 assuming first column is header
 
 
     def loadFromBuffer(self):
@@ -67,15 +67,11 @@ class CNN_n_LSTM:
         print('saving data to buffer')
         save(self.path + 'numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
 
-    def format(self, chunk, zeroPad=True):
-        print('fuck you ')
-
-        if(zeroPad):
-            largestFrameCount = self.biggestDocLength()
+    def format(self, chunk, largestFrameCount, zeroPad=True, removeFirstLine=True):
 
         frames = []
         frame_count = 0
-        firstLine = True
+        firstLine = removeFirstLine
         print('format 1')
         for frame in chunk:
             if firstLine:
@@ -90,17 +86,16 @@ class CNN_n_LSTM:
             frames.append(np.asarray(joints).astype(float))
             frame_count += 1
 
-        print('format 2')
         transposed = np.transpose(np.asarray(frames), (1, 0, 2))
+        print('ts shape')
+        print(transposed.shape)
         transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
         if(zeroPad):
-            print('format 3 zeropad')
             result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
             result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
             print(np.asarray(result).shape)
         else:
-            print('format 3 NO zeropad')
             result = transposed
         return result
 
@@ -109,13 +104,16 @@ class CNN_n_LSTM:
         all_files = glob2.glob(self.dataPath + "/*.csv")
         i = 0
 
+        largestFrameCount = self.biggestDocLength()
+
+
         for filename in sorted(all_files):
             with open(filename, newline='') as csvfile:
                 print('loading: ' + filename)
                 # dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
                 data = genfromtxt(csvfile, delimiter=';')
 
-                result = self.format(data)
+                result = self.format(data, largestFrameCount)
 
                 if i % self.validationDataEvery == 0:
                     self.validation_dataset.append(result)
@@ -134,11 +132,6 @@ class CNN_n_LSTM:
         print(np.asarray(self.train_dataset).shape)
         print('traning onehot shape:')
         print(np.asarray(self.onehotTrainLabels).shape)
-
-        for encodes in range(0, 3):
-            inverted = self.label_encoder.inverse_transform(encodes)
-            print('label 1')
-            print(inverted)
 
 
 
@@ -238,7 +231,6 @@ class CNN_n_LSTM:
         plt.show()
 
         self.saveModel(model)
-        #model.save(self.trained_model_path, 'Lstm_s')
 
 
     def saveModel(self, model):
@@ -263,17 +255,8 @@ class CNN_n_LSTM:
 
 
 
-    def predict(self, data):
-        print('predict 1')
-        formattedData = self.format(data, False)
-        print('predict 2')
+    def predict(self, data, zeroPad, columnSize):
+        formattedData = self.format(data, columnSize, zeroPad, removeFirstLine=False)
         shape = np.asarray([formattedData])
-        print('predict 3')
-
         score = self.model.predict(shape, verbose=0)
-        print('predict 4')
-
-        print('score:')
-        print(score)
-        # print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100))
         return score
