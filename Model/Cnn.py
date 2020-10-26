@@ -6,13 +6,17 @@ from keras.optimizers import schedules
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
-import glob2
 import csv
 import matplotlib.pyplot as plt
 from numpy import load, save, genfromtxt
+import glob2
 
+label_encoder = LabelEncoder()
+oneHot_encoder = OneHotEncoder(sparse=False)
 
-class CNN_n_LSTM:
+import Model.tools as Tools
+
+class cnn():
 
     def __init__(self, lr, bs, e, split, f, loadModel=False, path = ''):
         self.path = path
@@ -33,87 +37,23 @@ class CNN_n_LSTM:
         self.validationFiles = []
 
         if (loadModel):
-            self.model = self.loadModel()
+            self.model = Tools.loadModel(self.path)
         else:
             self.model = None
 
 
-    def biggestDocLength (self):
-        all_files = glob2.glob(self.dataPath + "/*.csv")
-        biggestRowCount = -1
-        for filename in all_files:
-            print(filename)
-            with open(filename, newline='') as csvfile:
-                data = genfromtxt(csvfile, delimiter=';')
-                length = len(data.tolist())
-                if(length > biggestRowCount):
-                    biggestRowCount = length
-        print('biggest row')
-        print(biggestRowCount - 1)
-        return biggestRowCount - 1 # -1 assuming first column is header
-
-
-    def loadFromBuffer(self):
-        try:
-            npObject = load(self.path + 'numpy-buffers/' + self.dataPath + '-npBuffer.npy', allow_pickle=True)
-            print('buffer loaded')
-            return npObject
-        except:
-            print('no buffer')
-            return False
-
-
-    def bufferFile(self, npObject):
-        print('saving data to buffer')
-        save(self.path + 'numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
-
-    def format(self, chunk, largestFrameCount, zeroPad=True, removeFirstLine=True):
-
-        frames = []
-        frame_count = 0
-        firstLine = removeFirstLine
-        print('format 1')
-        for frame in chunk:
-            if firstLine:
-                firstLine = False
-                continue
-            coords = []  # x, y, z
-            for col in range(0, len(frame[:-1])):
-                if (col % 9 == 0 or col % 9 == 1 or col % 9 == 2):
-                    coords.append(np.asarray([frame[col]]))
-
-            joints = np.asarray(coords).reshape(-1, 3)  # produces 32 * 3
-            frames.append(np.asarray(joints).astype(float))
-            frame_count += 1
-
-        transposed = np.transpose(np.asarray(frames), (1, 0, 2))
-        print('ts shape')
-        print(transposed.shape)
-        transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
-
-        if(zeroPad):
-            result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
-            result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
-            print(np.asarray(result).shape)
-        else:
-            result = transposed
-        return result
 
 
     def preprocess(self):
         all_files = glob2.glob(self.dataPath + "/*.csv")
+        largestFrameCount = Tools.biggestDocLength(self.dataPath)
+
         i = 0
-
-        largestFrameCount = self.biggestDocLength()
-
-
         for filename in sorted(all_files):
             with open(filename, newline='') as csvfile:
                 print('loading: ' + filename)
-                # dataScanner = csv.reader(csvfile, delimiter=';', quotechar='|')
                 data = genfromtxt(csvfile, delimiter=';')
-
-                result = self.format(data, largestFrameCount)
+                result = Tools.format(data, largestFrameCount)
 
                 if i % self.validationDataEvery == 0:
                     self.validation_dataset.append(result)
@@ -121,13 +61,10 @@ class CNN_n_LSTM:
                 else:
                     self.train_dataset.append(result)
                     self.trainFiles.append(filename)
-
             i += 1
-        #print(np.asarray(self.trainFiles).shape)
-        self.label_encoder = LabelEncoder()
-        self.oneHot_encoder = OneHotEncoder(sparse=False)
-        self.onehotTrainLabels = self.encode_labels(self.trainFiles)
-        self.onehotValidationLabels = self.encode_labels(self.validationFiles)
+
+        self.onehotTrainLabels = Tools.encode_labels(self.trainFiles)
+        self.onehotValidationLabels = Tools.encode_labels(self.validationFiles)
         print('train_dataset shape')
         print(np.asarray(self.train_dataset).shape)
         print('traning onehot shape:')
@@ -135,19 +72,6 @@ class CNN_n_LSTM:
 
 
 
-    def encode_labels(self, file_names):
-        mappedFileNames = []
-        for filename in file_names:
-            mappedFileNames.append(filename.split("_")[0])
-            # print(file_names)
-        integer_encoded = self.label_encoder.fit_transform(mappedFileNames)
-        print(integer_encoded)
-        print(mappedFileNames)
-        integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
-        onehot_encoded = self.oneHot_encoder.fit_transform(integer_encoded)
-
-
-        return onehot_encoded
 
 
 
@@ -159,22 +83,21 @@ class CNN_n_LSTM:
         x_validation = None
         y_validation = None
 
-        bufferedNumpy = self.loadFromBuffer()
+        bufferedNumpy = Tools.loadFromBuffer(self.path, self.dataPath)
 
-        if(bufferedNumpy != False):
-            x_train = bufferedNumpy[0]
-            y_train = bufferedNumpy[1]
-            x_validation = bufferedNumpy[2]
-            y_validation = bufferedNumpy[3]
-        else:
+        if(bufferedNumpy == False):
             self.preprocess()
             print('Preprocessing files')
             x_train = np.asarray(self.train_dataset)
             y_train = np.asarray(self.onehotTrainLabels)
             x_validation = np.asarray(self.validation_dataset)
             y_validation = np.asarray(self.onehotValidationLabels)
-            self.bufferFile(np.asarray([x_train, y_train, x_validation, y_validation]))
-
+            Tools.bufferFile(self.path, self.dataPath, np.asarray([x_train, y_train, x_validation, y_validation]))
+        else:
+            x_train = bufferedNumpy[0]
+            y_train = bufferedNumpy[1]
+            x_validation = bufferedNumpy[2]
+            y_validation = bufferedNumpy[3]
 
 
         sequence = x_train.shape[0]
@@ -183,10 +106,7 @@ class CNN_n_LSTM:
         coords = x_train.shape[3]
         channels = x_train.shape[4]
 
-
         self.label_size = y_train.shape[1]
-
-
 
         lr_schedule = schedules.ExponentialDecay(
             initial_learning_rate=1e-2,
@@ -230,33 +150,11 @@ class CNN_n_LSTM:
         plt.legend()
         plt.show()
 
-        self.saveModel(model)
-
-
-    def saveModel(self, model):
-        model_json = model.to_json()
-        with open(self.path + "saved-models/model.json", "w") as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        model.save_weights(self.path + "saved-models/model.h5")
-        print("Saved model to disk")
-
-    def loadModel(self):
-        json_file = open(self.path + 'saved-models/model.json', 'r')
-        loaded_model_json = json_file.read()
-        json_file.close()
-        loaded_model = model_from_json(loaded_model_json)
-        # load weights into new model
-        loaded_model.load_weights(self.path + "saved-models/model.h5")
-        print("Loaded model from disk")
-        loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-
-        return loaded_model
-
+        Tools.saveModel(self.path, model)
 
 
     def predict(self, data, zeroPad, columnSize):
-        formattedData = self.format(data, columnSize, zeroPad, removeFirstLine=False)
+        formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)
         shape = np.asarray([formattedData])
         score = self.model.predict(shape, verbose=0)
         return score
