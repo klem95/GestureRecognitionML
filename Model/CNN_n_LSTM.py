@@ -27,7 +27,6 @@ class CNN_n_LSTM:
         self.feature_size = 0
         self.labels = []
 
-
         self.train_dataset = []
         self.validation_dataset = []
         self.trainFiles = []
@@ -69,12 +68,15 @@ class CNN_n_LSTM:
         save(self.path + 'numpy-buffers/' + self.dataPath + '-npBuffer.npy', npObject)
 
     def format(self, chunk, zeroPad=True):
+        print('fuck you ')
 
-        largestFrameCount = self.biggestDocLength()
+        if(zeroPad):
+            largestFrameCount = self.biggestDocLength()
 
         frames = []
         frame_count = 0
         firstLine = True
+        print('format 1')
         for frame in chunk:
             if firstLine:
                 firstLine = False
@@ -88,14 +90,17 @@ class CNN_n_LSTM:
             frames.append(np.asarray(joints).astype(float))
             frame_count += 1
 
+        print('format 2')
         transposed = np.transpose(np.asarray(frames), (1, 0, 2))
         transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
         if(zeroPad):
+            print('format 3 zeropad')
             result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
             result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
             print(np.asarray(result).shape)
         else:
+            print('format 3 NO zeropad')
             result = transposed
         return result
 
@@ -259,10 +264,14 @@ class CNN_n_LSTM:
 
 
     def predict(self, data):
+        print('predict 1')
         formattedData = self.format(data, False)
+        print('predict 2')
         shape = np.asarray([formattedData])
+        print('predict 3')
 
         score = self.model.predict(shape, verbose=0)
+        print('predict 4')
 
         print('score:')
         print(score)
