@@ -15,6 +15,7 @@ label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
 from GestureRecognitionML import Tools
+#import Model.tools as Tools
 
 class cnn():
 
