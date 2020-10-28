@@ -1,5 +1,5 @@
 #from BasicLstmModel import BasicLstmModel
-from Model.CNN_n_LSTM import CNN_n_LSTM
+from Model.Cnn import cnn
 from Model.LSTM_s import LSTM_s
 import argparse
 import numpy as np
@@ -8,10 +8,11 @@ lstm = "lstm"
 cnn = "cnn"
 cnn_lstm = "cnn_lstm"
 
+
 def main():
 
     parser = argparse.ArgumentParser(description="AI Model Specifications")
-    parser.add_argument("-m", metavar='m', type=str, default=cnn)
+    parser.add_argument("-m", metavar='m', type=str, default=CNN)
     parser.add_argument("-lr", metavar='l', type=float, default=0.5)
     parser.add_argument("-bs", metavar='bs', type=int, default=400)
     parser.add_argument("-e", metavar='e', type=int, default=20)
@@ -24,14 +25,14 @@ def main():
         lstm_model = LSTM_s()
         lstm_model.train_model()
     elif args.m == cnn:
-        cnn_n_lstm = CNN_n_LSTM(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
+        Cnn = cnn(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         if(args.loadModel == False):
-            cnn_n_lstm.train_model()
+            Cnn.train_model()
         else:
             columnSize = 120
             data = np.zeros((30, 289))
             print(data.shape)
-            prediction = cnn_n_lstm.predict(data, True, columnSize)
+            prediction = Cnn.predict(data, True, columnSize)
             print(prediction)
 
 

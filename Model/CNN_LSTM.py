@@ -14,7 +14,7 @@ class CNN_LSTM:
 
     def train_model(self):
 
-        # Data format: 
+        # Data format: ()
 
 
         x_train = None
