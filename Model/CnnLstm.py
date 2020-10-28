@@ -1,7 +1,7 @@
 import numpy as np
 from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout, Conv2D, MaxPooling2D, TimeDistributed, Conv3D, MaxPooling3D, Reshape
+from keras.layers import LSTM, Dense, Flatten, Dropout, Conv3D, Reshape, Permute
 from keras.optimizers import schedules
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
@@ -14,13 +14,13 @@ import glob2
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
-#from GestureRecognitionML import Tools
+# from GestureRecognitionML import Tools
 import Model.tools as Tools
 
 
-class cnn():
+class cnnlstm():
 
-    def __init__(self, lr, bs, e, split, f, loadModel=False, path = ''):
+    def __init__(self, lr, bs, e, split, f, loadModel=False, path=''):
         self.path = path
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
@@ -42,9 +42,6 @@ class cnn():
             self.model = Tools.loadModel(self.path)
         else:
             self.model = None
-
-
-
 
     def preprocess(self):
         all_files = glob2.glob(self.dataPath + "/*.csv")
@@ -72,7 +69,6 @@ class cnn():
         print('traning onehot shape:')
         print(np.asarray(self.onehotTrainLabels).shape)
 
-
     def train_model(self):
         print('CNN Model')
 
@@ -83,7 +79,7 @@ class cnn():
 
         bufferedNumpy = Tools.loadFromBuffer(self.path, self.dataPath)
 
-        if(bufferedNumpy == False):
+        if (bufferedNumpy == False):
             self.preprocess()
             print('Preprocessing files')
             x_train = np.asarray(self.train_dataset)
@@ -96,7 +92,6 @@ class cnn():
             y_train = bufferedNumpy[1]
             x_validation = bufferedNumpy[2]
             y_validation = bufferedNumpy[3]
-
 
         sequence = x_train.shape[0]
         joints = x_train.shape[1]
@@ -113,34 +108,38 @@ class cnn():
 
         model = Sequential()
 
-        model.add(Conv3D(20, # (None, 30, 118, 3, 20)
+        model.add(Conv3D(20,  # (None, 30, 118, 3, 20)
                          activation='tanh',
                          kernel_initializer='he_uniform',
                          data_format='channels_last',
                          input_shape=(joints, frames, coords, channels),
                          kernel_size=(3, 3, 1)))
-        # model.add(MaxPooling3D(pool_size=(2, 2, 1), strides=(1,1,1), data_format='channels_last', )) # (None, 29, 117, 3, 20)
-        model.add(Dropout(0.2)) # (None, 29, 117, 3, 20)
-        model.add(Conv3D(50, kernel_size=(2, 2, 1),  activation='tanh')) # (None, 28, 116, 3, 50)
-
-
-
-        # model.add(MaxPooling3D(pool_size=(2, 2, 1))) # (None, 14, 58, 3, 50)
-        model.add(Conv3D(100, kernel_size=(3, 3, 1),  activation='tanh'))
-        # model.add(MaxPooling3D(pool_size=(2, 2, 1)))
+        model.add(Dropout(0.2))  # (None, 29, 117, 3, 20)
+        model.add(Conv3D(50, kernel_size=(2, 2, 1), activation='tanh'))  # (None, 28, 116, 3, 50)
+        model.add(Conv3D(100, kernel_size=(3, 3, 1), activation='tanh'))
+        convJointSize = model.output_shape[1]
+        convTSize = model.output_shape[2]
+        model.add(Reshape((convJointSize, convTSize, -1)))
+        model.add(Permute((2, 1, 3)))
+        model.add(Reshape((convTSize, -1)))
+        model.add(LSTM(units=20, input_shape=(model.output_shape), return_sequences=True, recurrent_dropout=0.2))
+        model.add(LSTM(units=100, recurrent_dropout=0.1))
         model.add(Dropout(0.2))
         model.add(Dense(300))
         model.add(Dropout(0.2))
         model.add(Dense(100))
         model.add(Flatten())
 
-        model.add(Dense(self.label_size, activation='softmax')) # Classification
+        model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(),
                       metrics=['accuracy'])
-
+        print((joints, frames, coords, channels))
         model.summary()
 
-        mcp_save = ModelCheckpoint(self.path + 'saved-models/bestWeights.h5', save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint(self.path + 'saved-models/bestWeights.h5',
+                                   save_best_only=True,
+                                   monitor='val_loss',
+                                   mode='min')
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
         print(history.history.keys())
@@ -151,7 +150,6 @@ class cnn():
         plt.show()
 
         Tools.saveModel(self.path, model)
-
 
     def predict(self, data, columnSize, zeroPad):
         formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)

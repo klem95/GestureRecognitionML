@@ -74,14 +74,14 @@ def saveModel(path, model):
     model.save_weights(path + "saved-models/model.h5")
     print("Saved model to disk")
 
-def loadModel(path):
+def loadModel(path, weights='bestWeights.h5'):
     json_file = open(path + 'saved-models/model.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
 
     # load weights into new model
-    loaded_model.load_weights(path + "saved-models/model.h5")
+    loaded_model.load_weights(path + "saved-models/" + weights)
     print("Loaded model from disk")
     loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
