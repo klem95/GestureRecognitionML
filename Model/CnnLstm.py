@@ -14,8 +14,7 @@ import glob2
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
-# from GestureRecognitionML import Tools
-import Model.tools as Tools
+from GestureRecognitionML import Tools
 
 
 class cnnlstm():
@@ -32,6 +31,7 @@ class cnnlstm():
         self.time_steps = 0
         self.feature_size = 0
         self.labels = []
+        self.modelType = 'cnnlstm'
 
         self.train_dataset = []
         self.validation_dataset = []
@@ -39,7 +39,7 @@ class cnnlstm():
         self.validationFiles = []
 
         if (loadModel):
-            self.model = Tools.loadModel(self.path)
+            self.model = Tools.loadModel(self.path, self.modelType)
         else:
             self.model = None
 
@@ -136,20 +136,18 @@ class cnnlstm():
         print((joints, frames, coords, channels))
         model.summary()
 
-        mcp_save = ModelCheckpoint(self.path + 'saved-models/bestWeights.h5',
+        mcp_save = ModelCheckpoint(self.path + 'saved-models/' + self.modelType + '-bestWeights.h5',
                                    save_best_only=True,
                                    monitor='val_loss',
                                    mode='min')
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
-        print(history.history.keys())
-        print(mcp_save.best)
         plt.plot(history.history['loss'], label='train')
         plt.plot(history.history['val_loss'], label='validation')
         plt.legend()
         plt.show()
 
-        Tools.saveModel(self.path, model)
+        Tools.saveModel(self.path, model, self.modelType)
 
     def predict(self, data, columnSize, zeroPad):
         formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)

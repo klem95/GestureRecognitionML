@@ -14,13 +14,13 @@ import glob2
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
-#from GestureRecognitionML import Tools
-import Model.tools as Tools
+from GestureRecognitionML import Tools
 
 
 class cnn():
 
     def __init__(self, lr, bs, e, split, f, loadModel=False, path = ''):
+        self.modelType = 'cnn'
         self.path = path
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
@@ -39,7 +39,7 @@ class cnn():
         self.validationFiles = []
 
         if (loadModel):
-            self.model = Tools.loadModel(self.path)
+            self.model = Tools.loadModel(self.path, self.modelType)
         else:
             self.model = None
 
@@ -140,7 +140,10 @@ class cnn():
 
         model.summary()
 
-        mcp_save = ModelCheckpoint(self.path + 'saved-models/bestWeights.h5', save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint(self.path + 'saved-models/' + self.modelType + '-bestWeights.h5',
+                                   save_best_only=True,
+                                   monitor='val_loss',
+                                   mode='min')
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
         print(history.history.keys())
@@ -150,7 +153,7 @@ class cnn():
         plt.legend()
         plt.show()
 
-        Tools.saveModel(self.path, model)
+        Tools.saveModel(self.path, model, self.modelType)
 
 
     def predict(self, data, columnSize, zeroPad):

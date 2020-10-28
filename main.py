@@ -41,7 +41,7 @@ def main():
             columnSize = 120
             data = np.zeros((30, 289))
             print(data.shape)
-            prediction = model.predict(data, True, columnSize)
+            prediction = model.predict(data, columnSize, True)
             print(prediction)
 
 
