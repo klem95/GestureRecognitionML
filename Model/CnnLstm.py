@@ -81,7 +81,6 @@ class cnnlstm():
 
         if (bufferedNumpy == False):
             self.preprocess()
-            print('Preprocessing files')
             x_train = np.asarray(self.train_dataset)
             y_train = np.asarray(self.onehotTrainLabels)
             x_validation = np.asarray(self.validation_dataset)
@@ -92,6 +91,9 @@ class cnnlstm():
             y_train = bufferedNumpy[1]
             x_validation = bufferedNumpy[2]
             y_validation = bufferedNumpy[3]
+
+        [x_validation, y_validation] = Tools.shuffleData(x_validation, y_validation)
+        [x_train, y_train] = Tools.shuffleData(x_train, y_train)
 
         sequence = x_train.shape[0]
         joints = x_train.shape[1]

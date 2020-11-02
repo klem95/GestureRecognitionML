@@ -31,7 +31,7 @@ def main():
             columnSize = 120
             data = np.zeros((30, 289))
             print(data.shape)
-            prediction = Cnn.predict(data, True, columnSize)
+            prediction = Cnn.predict(data, columnSize, True)
             print(prediction)
     elif args.m == CNNLSTM:
         model = cnnlstm(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
