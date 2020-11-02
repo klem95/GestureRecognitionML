@@ -119,15 +119,15 @@ class cnn():
                          data_format='channels_last',
                          input_shape=(joints, frames, coords, channels),
                          kernel_size=(3, 3, 1)))
-        # model.add(MaxPooling3D(pool_size=(2, 2, 1), strides=(1,1,1), data_format='channels_last', )) # (None, 29, 117, 3, 20)
+        model.add(MaxPooling3D(pool_size=(2, 2, 1), strides=(1,1,1), data_format='channels_last', )) # (None, 29, 117, 3, 20)
         model.add(Dropout(0.2)) # (None, 29, 117, 3, 20)
         model.add(Conv3D(50, kernel_size=(2, 2, 1),  activation='tanh')) # (None, 28, 116, 3, 50)
 
 
 
-        # model.add(MaxPooling3D(pool_size=(2, 2, 1))) # (None, 14, 58, 3, 50)
+        model.add(MaxPooling3D(pool_size=(2, 2, 1))) # (None, 14, 58, 3, 50)
         model.add(Conv3D(100, kernel_size=(3, 3, 1),  activation='tanh'))
-        # model.add(MaxPooling3D(pool_size=(2, 2, 1)))
+        model.add(MaxPooling3D(pool_size=(2, 2, 1)))
         model.add(Dropout(0.2))
         model.add(Dense(300))
         model.add(Dropout(0.2))

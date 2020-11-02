@@ -82,7 +82,7 @@ def loadModel(path, modelType, weights='-bestWeights.h5'):
 
     # load weights into new model
     loaded_model.load_weights(path + "saved-models/" + modelType + weights)
-    print("Loaded model from disk")
+    #print("Loaded model from disk: " + path + "saved-models/" + modelType + weights)
     loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
     return loaded_model
