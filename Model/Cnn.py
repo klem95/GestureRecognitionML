@@ -6,9 +6,8 @@ from keras.optimizers import schedules
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
-import csv
 import matplotlib.pyplot as plt
-from numpy import load, save, genfromtxt
+from numpy import genfromtxt
 import glob2
 
 label_encoder = LabelEncoder()

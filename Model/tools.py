@@ -4,27 +4,57 @@ import glob2
 from keras.models import Sequential, model_from_json
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.utils import shuffle
 
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
+UPPER_BODY = [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
 
-def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data, columnSize, zeroPad, removeFirstLine
-    frames = []
-    frame_count = 0
-    firstLine = removeFirstLine
-    for frame in chunk:
-        if firstLine:
-            firstLine = False
-            continue
-        coords = []  # x, y, z
-        for col in range(0, len(frame[:-1])):
-            if (col % 9 == 0 or col % 9 == 1 or col % 9 == 2):
-                coords.append(np.asarray([frame[col]]))
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
 
-        joints = np.asarray(coords).reshape(-1, 3)  # produces 32 * 3
-        frames.append(np.asarray(joints).astype(float))
-        frame_count += 1
+
+]
+
+LOWER_BODY = [
+    0,
+    1,
+
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+
+
+]
+
+
+def transposeAndZeropad(frames, largestFrameCount, zeroPad):
 
     transposed = np.transpose(np.asarray(frames), (1, 0, 2))
     transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
@@ -35,6 +65,53 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data
         result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
     else:
         result = transposed
+    return result
+
+def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True, splitBody=False): # data, columnSize, zeroPad, removeFirstLine
+    frames = []
+    upperFrames = []
+    lowerFrames = []
+    frame_count = 0
+    firstLine = removeFirstLine
+    for frame in chunk:
+        if firstLine:
+            firstLine = False
+            continue
+        coords = []  # x, y, z
+        upperCoords = []
+        lowerCoords = []
+
+        boneIndex = 0
+        for col in range(0, len(frame[:-1])):
+            if (col % 9 == 0 or col % 9 == 1 or col % 9 == 2):
+                if(splitBody):
+                    if(boneIndex in UPPER_BODY):
+                        upperCoords.append(np.asarray([frame[col]]))
+                    else:
+                        lowerCoords.append(np.asarray([frame[col]]))
+                    if(col % 9 == 2):
+                        boneIndex += 1
+                    else:
+                       coords.append(np.asarray([frame[col]]))
+
+        if(splitBody):
+            upperJoints = np.asarray(upperCoords).reshape(-1, 3)  # produces 32 * 3
+            upperFrames.append(np.asarray(upperJoints).astype(float))
+            lowerJoints = np.asarray(lowerCoords).reshape(-1, 3)  # produces 32 * 3
+            lowerFrames.append(np.asarray(lowerJoints).astype(float))
+        else:
+            joints = np.asarray(coords).reshape(-1, 3)  # produces 32 * 3
+            frames.append(np.asarray(joints).astype(float))
+
+        frame_count += 1
+
+    if(splitBody):
+        result = [transposeAndZeropad(upperFrames, largestFrameCount, zeroPad), transposeAndZeropad(lowerFrames, largestFrameCount, zeroPad)]
+    else:
+        result = transposeAndZeropad(frames, largestFrameCount, zeroPad)
+
+    print(result)
+
     return result
 
 def biggestDocLength (dataPath):
@@ -92,7 +169,7 @@ def encode_labels(file_names):
     mappedFileNames = []
     for filename in file_names:
         mappedFileNames.append(filename.split("_")[0])
-        # print(file_names)
+        print(file_names)
     integer_encoded = label_encoder.fit_transform(mappedFileNames)
     print(integer_encoded)
     print(mappedFileNames)
@@ -101,3 +178,8 @@ def encode_labels(file_names):
 
 
     return onehot_encoded
+
+
+def shuffleData(x, y):
+    x, y = shuffle(x, y)
+    return [x, y]
