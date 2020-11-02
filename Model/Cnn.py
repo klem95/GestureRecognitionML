@@ -14,7 +14,7 @@ import glob2
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
-import Model.tools as Tools
+#from GestureRecognitionML import Tools
 
 class cnn():
 
@@ -69,10 +69,6 @@ class cnn():
         print(np.asarray(self.train_dataset).shape)
         print('traning onehot shape:')
         print(np.asarray(self.onehotTrainLabels).shape)
-
-
-
-
 
 
     def train_model(self):
@@ -132,6 +128,7 @@ class cnn():
         model.add(Dense(300))
         model.add(Dropout(0.2))
         model.add(Dense(100))
+
         model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax')) # Classification
@@ -153,7 +150,7 @@ class cnn():
         Tools.saveModel(self.path, model)
 
 
-    def predict(self, data, zeroPad, columnSize):
+    def predict(self, data, columnSize, zeroPad):
         formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)
         shape = np.asarray([formattedData])
         score = self.model.predict(shape, verbose=0)

@@ -1,6 +1,7 @@
 #from BasicLstmModel import BasicLstmModel
 from Model.Cnn import cnn
 from Model.LSTM_s import LSTM_s
+from Model.CNN_LSTM import CNN_LSTM
 import argparse
 import numpy as np
 
@@ -12,7 +13,7 @@ cnn_lstm = "cnn_lstm"
 def main():
 
     parser = argparse.ArgumentParser(description="AI Model Specifications")
-    parser.add_argument("-m", metavar='m', type=str, default=CNN)
+    parser.add_argument("-m", metavar='m', type=str, default=cnn_lstm)
     parser.add_argument("-lr", metavar='l', type=float, default=0.5)
     parser.add_argument("-bs", metavar='bs', type=int, default=400)
     parser.add_argument("-e", metavar='e', type=int, default=20)
@@ -34,6 +35,9 @@ def main():
             print(data.shape)
             prediction = Cnn.predict(data, True, columnSize)
             print(prediction)
+    elif args.m == cnn_lstm:
+        cnn_Lstm_model = CNN_LSTM(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
+        cnn_Lstm_model.train_model()
 
 
 
