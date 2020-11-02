@@ -3,6 +3,7 @@ from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
 from keras.layers import LSTM, Dense, Flatten, Dropout, Conv3D, Reshape, Permute
 from keras.optimizers import schedules
+from keras import regularizers
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
@@ -10,6 +11,7 @@ import csv
 import matplotlib.pyplot as plt
 from numpy import load, save, genfromtxt
 import glob2
+# from livelossplot import PlotLossesKeras
 
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
@@ -127,9 +129,9 @@ class cnnlstm():
         model.add(LSTM(units=20, input_shape=(model.output_shape), return_sequences=True, recurrent_dropout=0.2))
         model.add(LSTM(units=100, recurrent_dropout=0.1))
         model.add(Dropout(0.2))
-        model.add(Dense(300))
+        model.add(Dense(300, kernel_regularizer=regularizers.l2(0.1)))
         model.add(Dropout(0.2))
-        model.add(Dense(100))
+        model.add(Dense(100, kernel_regularizer=regularizers.l2(0.1)))
         model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
