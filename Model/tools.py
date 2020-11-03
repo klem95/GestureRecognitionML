@@ -67,10 +67,8 @@ def transposeAndZeropad(frames, largestFrameCount, zeroPad):
         result = transposed
     return result
 
-def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True, splitBody=False): # data, columnSize, zeroPad, removeFirstLine
+def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data, columnSize, zeroPad, removeFirstLine
     frames = []
-    upperFrames = []
-    lowerFrames = []
     frame_count = 0
     firstLine = removeFirstLine
     for frame in chunk:
@@ -78,41 +76,26 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True, splitBo
             firstLine = False
             continue
         coords = []  # x, y, z
-        upperCoords = []
-        lowerCoords = []
-
-        boneIndex = 0
         for col in range(0, len(frame[:-1])):
             if (col % 9 == 0 or col % 9 == 1 or col % 9 == 2):
-                if(splitBody):
-                    if(boneIndex in UPPER_BODY):
-                        upperCoords.append(np.asarray([frame[col]]))
-                    else:
-                        lowerCoords.append(np.asarray([frame[col]]))
-                    if(col % 9 == 2):
-                        boneIndex += 1
-                    else:
-                       coords.append(np.asarray([frame[col]]))
+                coords.append(np.asarray([frame[col]]))
 
-        if(splitBody):
-            upperJoints = np.asarray(upperCoords).reshape(-1, 3)  # produces 32 * 3
-            upperFrames.append(np.asarray(upperJoints).astype(float))
-            lowerJoints = np.asarray(lowerCoords).reshape(-1, 3)  # produces 32 * 3
-            lowerFrames.append(np.asarray(lowerJoints).astype(float))
-        else:
-            joints = np.asarray(coords).reshape(-1, 3)  # produces 32 * 3
-            frames.append(np.asarray(joints).astype(float))
-
+        joints = np.asarray(coords).reshape(-1, 3)  # produces 32 * 3
+        frames.append(np.asarray(joints).astype(float))
         frame_count += 1
 
-    if(splitBody):
-        result = [transposeAndZeropad(upperFrames, largestFrameCount, zeroPad), transposeAndZeropad(lowerFrames, largestFrameCount, zeroPad)]
+    transposed = np.transpose(np.asarray(frames), (1, 0, 2))
+    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
+
+    if (zeroPad):
+        print(largestFrameCount, transposed.shape)
+        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
+        result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
     else:
-        result = transposeAndZeropad(frames, largestFrameCount, zeroPad)
-
-    print(result)
-
+        result = transposed
     return result
+
+
 
 def biggestDocLength (dataPath):
     all_files = glob2.glob(dataPath + "/*.csv")

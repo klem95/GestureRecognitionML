@@ -154,7 +154,11 @@ class cnnlstm():
         Tools.saveModel(self.path, model, self.modelType)
 
     def predict(self, data, columnSize, zeroPad):
+        print('data')
+        print(data)
+
         formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)
         shape = np.asarray([formattedData])
+        print(shape.shape)
         score = self.model.predict(shape, verbose=0)
         return score
