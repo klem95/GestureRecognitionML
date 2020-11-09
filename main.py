@@ -4,9 +4,12 @@ from Model.LSTM_s import LSTM_s
 import argparse
 import numpy as np
 from Model.CnnLstm import cnnlstm
+from Model.Conv1d import conv1d
+
 LSTM = "lstm"
 CNN = "cnn"
 CNNLSTM = 'cnnltsm'
+CONV1D = 'conv1d'
 
 def main():
 
@@ -21,7 +24,7 @@ def main():
     args = parser.parse_args()
 
     if args.m == LSTM:
-        lstm_model = LSTM_s()
+        lstm_model = LSTM_s(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         lstm_model.train_model()
     elif args.m == CNN:
         Cnn = cnn(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
@@ -35,6 +38,16 @@ def main():
             print(prediction)
     elif args.m == CNNLSTM:
         model = cnnlstm(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
+        if(args.loadModel == False):
+            model.train_model()
+        else:
+            columnSize = 120
+            data = np.zeros((30, 289))
+            print(data.shape)
+            prediction = model.predict(data, columnSize, True)
+            print(prediction)
+    elif args.m == CONV1D:
+        model = conv1d(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         if(args.loadModel == False):
             model.train_model()
         else:
