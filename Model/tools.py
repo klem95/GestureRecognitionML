@@ -4,10 +4,68 @@ import glob2
 from keras.models import Sequential, model_from_json
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.utils import shuffle
 
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
+UPPER_BODY = [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+
+
+]
+
+LOWER_BODY = [
+    0,
+    1,
+
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+
+
+]
+
+
+def transposeAndZeropad(frames, largestFrameCount, zeroPad):
+
+    transposed = np.transpose(np.asarray(frames), (1, 0, 2))
+    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
+
+    if (zeroPad):
+        print(largestFrameCount, transposed.shape)
+        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
+        result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
+    else:
+        result = transposed
+    return result
 
 def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data, columnSize, zeroPad, removeFirstLine
     frames = []
@@ -36,6 +94,8 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data
     else:
         result = transposed
     return result
+
+
 
 def biggestDocLength (dataPath):
     all_files = glob2.glob(dataPath + "/*.csv")
@@ -82,7 +142,7 @@ def loadModel(path, modelType, weights='-bestWeights.h5'):
 
     # load weights into new model
     loaded_model.load_weights(path + "saved-models/" + modelType + weights)
-    print("Loaded model from disk")
+    #print("Loaded model from disk: " + path + "saved-models/" + modelType + weights)
     loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
     return loaded_model
@@ -92,9 +152,15 @@ def encode_labels(file_names):
     mappedFileNames = []
     for filename in file_names:
         mappedFileNames.append(filename.split("_")[0])
+        print(file_names)
     integer_encoded = label_encoder.fit_transform(mappedFileNames)
     print(integer_encoded)
     print(mappedFileNames)
     integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
     onehot_encoded = oneHot_encoder.fit_transform(integer_encoded)
     return onehot_encoded
+
+
+def shuffleData(x, y):
+    x, y = shuffle(x, y)
+    return [x, y]

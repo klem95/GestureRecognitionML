@@ -3,6 +3,7 @@ from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
 from keras.layers import LSTM, Dense, Flatten, Dropout, Conv3D, Reshape, Permute
 from keras.optimizers import schedules
+from keras import regularizers
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
@@ -10,6 +11,7 @@ import csv
 import matplotlib.pyplot as plt
 from numpy import load, save, genfromtxt
 import glob2
+# from livelossplot import PlotLossesKeras
 
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
@@ -81,7 +83,6 @@ class cnnlstm():
 
         if (bufferedNumpy == False):
             self.preprocess()
-            print('Preprocessing files')
             x_train = np.asarray(self.train_dataset)
             y_train = np.asarray(self.onehotTrainLabels)
             x_validation = np.asarray(self.validation_dataset)
@@ -92,6 +93,9 @@ class cnnlstm():
             y_train = bufferedNumpy[1]
             x_validation = bufferedNumpy[2]
             y_validation = bufferedNumpy[3]
+
+        [x_validation, y_validation] = Tools.shuffleData(x_validation, y_validation)
+        [x_train, y_train] = Tools.shuffleData(x_train, y_train)
 
         sequence = x_train.shape[0]
         joints = x_train.shape[1]
@@ -125,9 +129,9 @@ class cnnlstm():
         model.add(LSTM(units=20, input_shape=(model.output_shape), return_sequences=True, recurrent_dropout=0.2))
         model.add(LSTM(units=100, recurrent_dropout=0.1))
         model.add(Dropout(0.2))
-        model.add(Dense(300))
+        model.add(Dense(300, kernel_regularizer=regularizers.l2(0.1)))
         model.add(Dropout(0.2))
-        model.add(Dense(100))
+        model.add(Dense(100, kernel_regularizer=regularizers.l2(0.1)))
         model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
@@ -150,7 +154,11 @@ class cnnlstm():
         Tools.saveModel(self.path, model, self.modelType)
 
     def predict(self, data, columnSize, zeroPad):
+        print('data')
+        print(data)
+
         formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)
         shape = np.asarray([formattedData])
+        print(shape.shape)
         score = self.model.predict(shape, verbose=0)
         return score
