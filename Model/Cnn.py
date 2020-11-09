@@ -1,7 +1,7 @@
 import numpy as np
 from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout, Conv2D, MaxPooling2D, TimeDistributed, Conv3D, MaxPooling3D
+from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout, Conv2D, MaxPooling2D, TimeDistributed, Conv3D, MaxPooling3D, Reshape
 from keras.optimizers import schedules
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
@@ -16,9 +16,11 @@ oneHot_encoder = OneHotEncoder(sparse=False)
 
 #from GestureRecognitionML import Tools
 
+
 class cnn():
 
     def __init__(self, lr, bs, e, split, f, loadModel=False, path = ''):
+        self.modelType = 'cnn'
         self.path = path
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
@@ -37,7 +39,7 @@ class cnn():
         self.validationFiles = []
 
         if (loadModel):
-            self.model = Tools.loadModel(self.path)
+            self.model = Tools.loadModel(self.path, self.modelType)
         else:
             self.model = None
 
@@ -111,19 +113,21 @@ class cnn():
 
         model = Sequential()
 
-        model.add(Conv3D(20,
+        model.add(Conv3D(20, # (None, 30, 118, 3, 20)
                          activation='tanh',
                          kernel_initializer='he_uniform',
                          data_format='channels_last',
                          input_shape=(joints, frames, coords, channels),
                          kernel_size=(3, 3, 1)))
-        model.add(MaxPooling3D(pool_size=(2, 2, 1), strides=(1,1,1), data_format='channels_last', ))
-        model.add(Dropout(0.2))
-        model.add(Conv3D(50, kernel_size=(2, 2, 1),  activation='tanh'))
-        model.add(MaxPooling3D(pool_size=(2, 2, 1)))
-        model.add(Conv3D(100, kernel_size=(3, 3, 1),  activation='tanh'))
-        model.add(MaxPooling3D(pool_size=(2, 2, 1)))
+        # model.add(MaxPooling3D(pool_size=(2, 2, 1), strides=(1,1,1), data_format='channels_last', )) # (None, 29, 117, 3, 20)
+        model.add(Dropout(0.2)) # (None, 29, 117, 3, 20)
+        model.add(Conv3D(50, kernel_size=(2, 2, 1),  activation='tanh')) # (None, 28, 116, 3, 50)
 
+
+
+        # model.add(MaxPooling3D(pool_size=(2, 2, 1))) # (None, 14, 58, 3, 50)
+        model.add(Conv3D(100, kernel_size=(3, 3, 1),  activation='tanh'))
+        # model.add(MaxPooling3D(pool_size=(2, 2, 1)))
         model.add(Dropout(0.2))
         model.add(Dense(300))
         model.add(Dropout(0.2))
@@ -137,7 +141,10 @@ class cnn():
 
         model.summary()
 
-        mcp_save = ModelCheckpoint(self.path + 'saved-models/bestWeights.h5', save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint(self.path + 'saved-models/' + self.modelType + '-bestWeights.h5',
+                                   save_best_only=True,
+                                   monitor='val_loss',
+                                   mode='min')
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
         print(history.history.keys())
@@ -147,7 +154,7 @@ class cnn():
         plt.legend()
         plt.show()
 
-        Tools.saveModel(self.path, model)
+        Tools.saveModel(self.path, model, self.modelType)
 
 
     def predict(self, data, columnSize, zeroPad):

@@ -9,7 +9,7 @@ label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
 
-def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True):
+def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data, columnSize, zeroPad, removeFirstLine
     frames = []
     frame_count = 0
     firstLine = removeFirstLine
@@ -30,6 +30,7 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True):
     transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
 
     if (zeroPad):
+        print(largestFrameCount, transposed.shape)
         result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
         result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
     else:
@@ -66,22 +67,21 @@ def bufferFile(path, dataPath, npObject):
     save(path + 'numpy-buffers/' + dataPath + '-npBuffer.npy', npObject)
 
 
-def saveModel(path, model):
+def saveModel(path, model, modelType):
     model_json = model.to_json()
-    with open(path + "saved-models/model.json", "w") as json_file:
+    with open(path + "saved-models/" + modelType + "-model.json", "w") as json_file:
         json_file.write(model_json)
-    # serialize weights to HDF5
-    model.save_weights(path + "saved-models/model.h5")
+    model.save_weights(path + "saved-models/" + modelType + "-model.h5")
     print("Saved model to disk")
 
-def loadModel(path):
-    json_file = open(path + 'saved-models/model.json', 'r')
+def loadModel(path, modelType, weights='-bestWeights.h5'):
+    json_file = open(path + 'saved-models/' + modelType + '-model.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
 
     # load weights into new model
-    loaded_model.load_weights(path + "saved-models/model.h5")
+    loaded_model.load_weights(path + "saved-models/" + modelType + weights)
     print("Loaded model from disk")
     loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
