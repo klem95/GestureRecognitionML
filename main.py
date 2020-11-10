@@ -1,6 +1,8 @@
 #from BasicLstmModel import BasicLstmModel
 from Model.Cnn import cnn
 from Model.LSTM_s import LSTM_s
+from Model.Cnn2DLstm import cnn2dlstm
+from Model.CnnLstm import cnnlstm
 import argparse
 import numpy as np
 from Model.CnnLstm import cnnlstm
@@ -10,6 +12,7 @@ LSTM = "lstm"
 CNN = "cnn"
 CNNLSTM = 'cnnltsm'
 CONV1D = 'conv1d'
+CNN2LSTM = 'cnn2dlstm'
 
 def main():
 
@@ -26,7 +29,7 @@ def main():
     if args.m == LSTM:
         lstm_model = LSTM_s(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         lstm_model.train_model()
-    elif args.m == CNN:
+    elif args.m == cnn:
         Cnn = cnn(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         if(args.loadModel == False):
             Cnn.train_model()
@@ -36,6 +39,7 @@ def main():
             print(data.shape)
             prediction = Cnn.predict(data, columnSize, True)
             print(prediction)
+
     elif args.m == CNNLSTM:
         model = cnnlstm(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         if(args.loadModel == False):
@@ -57,6 +61,9 @@ def main():
             prediction = model.predict(data, columnSize, True)
             print(prediction)
 
+    elif args.m == CNN2LSTM:
+        cnn_Lstm_model = cnn2dlstm(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
+        cnn_Lstm_model.train_model()
 
 
 if __name__ == "__main__":

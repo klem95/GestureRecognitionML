@@ -13,7 +13,7 @@ import glob2
 label_encoder = LabelEncoder()
 oneHot_encoder = OneHotEncoder(sparse=False)
 
-from GestureRecognitionML import Tools
+#from GestureRecognitionML import Tools
 
 
 class cnn():
@@ -131,6 +131,7 @@ class cnn():
         model.add(Dense(300))
         model.add(Dropout(0.2))
         model.add(Dense(100))
+
         model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax')) # Classification
