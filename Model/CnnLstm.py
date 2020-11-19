@@ -129,9 +129,9 @@ class cnnlstm():
         model.add(LSTM(units=20, input_shape=(model.output_shape), return_sequences=True, recurrent_dropout=0.2))
         model.add(LSTM(units=100, recurrent_dropout=0.1))
         model.add(Dropout(0.2))
-        model.add(Dense(300, kernel_regularizer=regularizers.l2(0.1)))
+        model.add(Dense(300))#, kernel_regularizer=regularizers.l2(1e-4)
         model.add(Dropout(0.2))
-        model.add(Dense(100, kernel_regularizer=regularizers.l2(0.1)))
+        model.add(Dense(100)) #kernel_regularizer=regularizers.l2(1e-4)
         model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
@@ -154,9 +154,6 @@ class cnnlstm():
         Tools.saveModel(self.path, model, self.modelType)
 
     def predict(self, data, columnSize, zeroPad):
-        print('data')
-        print(data)
-
         formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)
         shape = np.asarray([formattedData])
         print(shape.shape)
