@@ -1,7 +1,7 @@
 import live
 
 import logging
-logger = logging.getLogger("old")
+logger = logging.getLogger("live")
 
 class LoggingObject(object):
     """ Helper superclass for objects which wish to generate debugging output

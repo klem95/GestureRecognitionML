@@ -36,8 +36,8 @@ class Query(LoggingObject):
 
     Following this assumption, static helper functions also exist:
 
-        old.query(path, *args)
-        old.cmd(path, *args)
+        live.query(path, *args)
+        live.cmd(path, *args)
     """
 
     def __init__(self, address=("localhost", 9000), listen_port=9001):
@@ -53,14 +53,13 @@ class Query(LoggingObject):
 
         self.osc_address = address
         self.osc_target = liblo.Address(address[0], address[1])
-        print(self.osc_target.get_url())
         self.osc_server = liblo.Server(listen_port)
         self.osc_server.add_method(None, None, self.handler)
         self.osc_server_thread = None
         self.osc_server.add_bundle_handlers(self.start_bundle_handler, self.end_bundle_handler)
 
         self.osc_read_event = None
-        self.osc_timeout = 3.0
+        self.osc_timeout = 7.0
 
         self.osc_server_events = {}
 
@@ -85,7 +84,7 @@ class Query(LoggingObject):
     def cmd(self, msg, *args):
         """ Send a Live command without expecting a response back:
 
-            old.cmd("/old/tempo", 110.0) """
+            live.cmd("/live/tempo", 110.0) """
         
         self.log_debug("OSC output: %s %s", msg, args)
         try:
@@ -96,21 +95,21 @@ class Query(LoggingObject):
     def query(self, msg, *args, **kwargs):
         """ Send a Live command and synchronously wait for its response:
 
-            return old.query("/old/tempo")
+            return live.query("/live/tempo")
 
         Returns a list of values. """
 
         #------------------------------------------------------------------------
         # Use **kwargs because we want to be able to specify an optional kw
         # arg after variable-length args -- 
-        # eg old.query("/set/freq", 440, 1.0, response_address = "/verify/freq")
+        # eg live.query("/set/freq", 440, 1.0, response_address = "/verify/freq")
         #
         # http://stackoverflow.com/questions/5940180/python-default-keyword-arguments-after-variable-length-positional-arguments
         #------------------------------------------------------------------------
 
         #------------------------------------------------------------------------
         # Some calls produce responses at different addresses
-        # (eg /old/device -> /old/deviceall). Specify a response_address to
+        # (eg /live/device -> /live/deviceall). Specify a response_address to
         # take account of this.
         #------------------------------------------------------------------------
         response_address = kwargs.get("response_address", None)
@@ -169,7 +168,7 @@ class Query(LoggingObject):
             self.osc_server_events[address].set()
             return
 
-        if address == "/old/beat":
+        if address == "/live/beat":
             if self.beat_callback is not None:
                 #------------------------------------------------------------------------
                 # Beat callbacks are used if we want to trigger an event on each beat,

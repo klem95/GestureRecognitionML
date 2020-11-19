@@ -24,11 +24,10 @@ clip.play()
 
 """
 
-__version__ = "0.2.0"
 __author__ = "Daniel Jones <http://www.erase.net/>"
 __all__ = [ "Query", "Set", "Track", "Group", "Clip", "Device", "Parameter", "Scene" ]
 
-debug = True
+debug = False
 
 from .object import *
 from .constants import *
