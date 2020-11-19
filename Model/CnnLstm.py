@@ -26,7 +26,7 @@ class cnnlstm():
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
         self.epochs = 400 if e is None else e
-        self.validationDataEvery = 5 if split is None else split
+        self.validationDataEvery = 3 if split is None else split
         self.label_size = 0
         self.dataPath = 'Data' if f is None else f
         self.trained_model_path = 'Trained_models'  # use your path

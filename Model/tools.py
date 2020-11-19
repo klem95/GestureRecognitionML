@@ -57,7 +57,7 @@ LOWER_BODY = [
 def transposeAndZeropad(frames, largestFrameCount, zeroPad):
 
     transposed = np.transpose(np.asarray(frames), (1, 0, 2))
-    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
+    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2],  transposed.shape[3], 1))
 
     if (zeroPad):
         print(largestFrameCount, transposed.shape)
@@ -158,8 +158,6 @@ def encode_labels(file_names):
     print(mappedFileNames)
     integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
     onehot_encoded = oneHot_encoder.fit_transform(integer_encoded)
-
-
     return onehot_encoded
 
 
