@@ -78,19 +78,19 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data
         coords = []  # x, y, z
         for col in range(0, len(frame[:-1])):
             if (col % 9 == 0 or col % 9 == 1 or col % 9 == 2):
-                coords.append(np.asarray([ frame[col] ]))
+                coords.append(np.asarray([frame[col]]))
 
         joints = np.asarray(coords).reshape(-1, 3)  # produces 32 * 3
         frames.append(np.asarray(joints).astype(float))
         frame_count += 1
 
     transposed = np.transpose(np.asarray(frames), (1, 0, 2))
-    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
+    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2]))
 
     if (zeroPad):
         print(largestFrameCount, transposed.shape)
-        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
-        result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
+        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2]))
+        result[:transposed.shape[0], :transposed.shape[1], :transposed.shape[2]] = transposed
     else:
         result = transposed
     return result
