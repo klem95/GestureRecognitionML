@@ -1,7 +1,7 @@
 import numpy as np
 from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Dropout, Conv3D, Reshape, Permute
+from keras.layers import LSTM, Dense, Flatten, Dropout, Conv3D, Reshape, Permute, MaxPooling3D
 from keras.optimizers import schedules
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint
@@ -112,20 +112,27 @@ class cnnlstm():
 
         model = Sequential()
 
-        model.add(Conv3D(20,  # (None, 30, 118, 3, 20)
+
+        model.add(Conv3D(20,  # input shape: (None, 30, 118, 3, 20)
                          activation='tanh',
                          kernel_initializer='he_uniform',
                          data_format='channels_last',
-                         input_shape=(joints, frames, coords, channels),
-                         kernel_size=(3, 3, 1)))
-        model.add(Dropout(0.2))  # (None, 29, 117, 3, 20)
-        model.add(Conv3D(50, kernel_size=(2, 2, 1), activation='tanh'))  # (None, 28, 116, 3, 50)
+                         input_shape=(joints, frames, coords, channels), # 30 joints, 60 frames, 3 coords (xyz), 1 channel representing axis position
+                         kernel_size=(3, 3, 3))) # Kernel size is set to 3, 3, 3
+        model.add(MaxPooling3D(pool_size=(2, 2, 1), padding="same"))# Maxpool joints, timesteps, without pooling between x, y x
+        # model.add(Dropout(0.2))  # (None, 28, 116, 3, 20)
+
+        model.add(Conv3D(50, kernel_size=(2, 2, 1), activation='tanh'))
+        model.add(MaxPooling3D(pool_size=(2, 2, 1),  padding="same"))
+
         model.add(Conv3D(100, kernel_size=(3, 3, 1), activation='tanh'))
+        model.add(MaxPooling3D(pool_size=(2, 2, 1), padding='same'))
+
         convJointSize = model.output_shape[1]
-        convTSize = model.output_shape[2]
-        model.add(Reshape((convJointSize, convTSize, -1)))
-        model.add(Permute((2, 1, 3)))
-        model.add(Reshape((convTSize, -1)))
+        convFrameSize = model.output_shape[2]
+        model.add(Reshape((convJointSize, convFrameSize, -1)))
+        model.add(Permute((2, 1, 3))) # Permuting the conv output shape such that frames are given as the sequential input for the LSTM layers
+        model.add(Reshape((convFrameSize, -1))) # Reshaping the permuted output to match the (timesteps, features) LSTM input - while withholding the
         model.add(LSTM(units=20, input_shape=(model.output_shape), return_sequences=True, recurrent_dropout=0.2))
         model.add(LSTM(units=100, recurrent_dropout=0.1))
         model.add(Dropout(0.2))

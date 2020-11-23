@@ -23,3 +23,8 @@ def loadModel(name):
         print('No preset named: ' + name)
         return False
 
+
+def waitForBeats(beats):
+    for i in range(0, beats):
+        print('waiting for beat ' + str(i + 1) + ' of ' + str(beats))
+        set.wait_for_next_beat()

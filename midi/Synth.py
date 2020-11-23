@@ -30,11 +30,9 @@ class SynthSetting():
     def getParameters(self):
         for i in range(0, len(self.parameters)):
             self.values.append(self.getParameter(i))
-            print(self.values[-1])
 
     def setParameters(self):
         for i in range(0, len(self.parameters)):
-            print(self.values[i])
             self.setParameter(i, float(self.values[i][3]))
 
     def saveParameters(self):
@@ -50,6 +48,8 @@ class SynthSetting():
             lerpedParam = tools.lerp(param, otherParam, t)
             self.setParameter(i, lerpedParam)
     def play(self):
+        print('playing ' + self.name)
         set.tracks[self.track].clips[1].play()
     def stop(self):
+        print('stopping ' + self.name)
         set.tracks[self.track].stop()

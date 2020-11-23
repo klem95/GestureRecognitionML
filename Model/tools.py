@@ -78,7 +78,7 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data
         coords = []  # x, y, z
         for col in range(0, len(frame[:-1])):
             if (col % 9 == 0 or col % 9 == 1 or col % 9 == 2):
-                coords.append(np.asarray([frame[col]]))
+                coords.append(np.asarray([ frame[col] ]))
 
         joints = np.asarray(coords).reshape(-1, 3)  # produces 32 * 3
         frames.append(np.asarray(joints).astype(float))
