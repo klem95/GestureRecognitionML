@@ -1,7 +1,7 @@
 import numpy as np
 from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Dropout, Conv3D, Reshape, Permute
+from keras.layers import LSTM, Dense, Flatten, Dropout, Conv2D, Reshape, Permute, MaxPooling2D
 from keras.optimizers import schedules
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint
@@ -101,7 +101,7 @@ class cnnlstm():
         joints = x_train.shape[1]
         frames = x_train.shape[2]
         coords = x_train.shape[3]
-        channels = x_train.shape[4]
+        # channels = x_train.shape[4]
 
         self.label_size = y_train.shape[1]
 
@@ -112,32 +112,38 @@ class cnnlstm():
 
         model = Sequential()
 
-        model.add(Conv3D(20,  # (None, 30, 118, 3, 20)
+
+        model.add(Conv2D(20,  # input shape: (None, 32, 120, 3)
                          activation='tanh',
                          kernel_initializer='he_uniform',
                          data_format='channels_last',
-                         input_shape=(joints, frames, coords, channels),
-                         kernel_size=(3, 3, 1)))
-        model.add(Dropout(0.2))  # (None, 29, 117, 3, 20)
-        model.add(Conv3D(50, kernel_size=(2, 2, 1), activation='tanh'))  # (None, 28, 116, 3, 50)
-        model.add(Conv3D(100, kernel_size=(3, 3, 1), activation='tanh'))
+                         input_shape=(joints, frames, coords), # 30 joints, 60 frames, 3 channels representing axis position coordinates (xyz)
+                         kernel_size=(3, 3))) # Kernel size is set to 3, 3
+        model.add(MaxPooling2D(pool_size=(2, 2), padding="same")) # Maxpool
+
+        model.add(Conv2D(50, kernel_size=(2, 2), activation='tanh'))
+        model.add(MaxPooling2D(pool_size=(2, 2),  padding="same"))
+
+        model.add(Conv2D(100, kernel_size=(3, 3), activation='tanh'))
+        model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
+
         convJointSize = model.output_shape[1]
-        convTSize = model.output_shape[2]
-        model.add(Reshape((convJointSize, convTSize, -1)))
-        model.add(Permute((2, 1, 3)))
-        model.add(Reshape((convTSize, -1)))
+        convFrameSize = model.output_shape[2]
+        model.add(Reshape((convJointSize, convFrameSize, -1)))
+        model.add(Permute((2, 1, 3))) # Permuting the conv output shape such that frames are given as the sequential input for the LSTM layers
+        model.add(Reshape((convFrameSize, -1))) # Reshaping the permuted output to match the (timesteps, features) LSTM input - while withholding the
         model.add(LSTM(units=20, input_shape=(model.output_shape), return_sequences=True, recurrent_dropout=0.2))
-        model.add(LSTM(units=100, recurrent_dropout=0.1))
+        model.add(LSTM(units=100, input_shape=(model.output_shape), recurrent_dropout=0.1))
         model.add(Dropout(0.2))
-        model.add(Dense(300))#, kernel_regularizer=regularizers.l2(1e-4)
+        model.add(Dense(300, activation='tanh', kernel_regularizer=regularizers.l2(0.1)))
         model.add(Dropout(0.2))
-        model.add(Dense(100)) #kernel_regularizer=regularizers.l2(1e-4)
+        model.add(Dense(100, activation='tanh', kernel_regularizer=regularizers.l2(0.1)))
         model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(),
                       metrics=['accuracy'])
-        print((joints, frames, coords, channels))
+        print((joints, frames, coords))
         model.summary()
 
         mcp_save = ModelCheckpoint(self.path + 'saved-models/' + self.modelType + '-bestWeights.h5',

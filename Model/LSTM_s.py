@@ -101,7 +101,7 @@ class LSTM_s():
         joints = x_train.shape[1]
         frames = x_train.shape[2]
         coords = x_train.shape[3]
-        channels = x_train.shape[4]
+        # channels = x_train.shape[4]
 
 
 
@@ -122,15 +122,15 @@ class LSTM_s():
             decay_rate=0.9)
 
         model = Sequential()
-        model.add(LSTM(100,  # (None, 30, 118, 3, 20)
+        model.add(LSTM(50,  # (None, 30, 118, 3, 20)
                          recurrent_activation='tanh',
-                       recurrent_dropout=0.2,
+                         recurrent_dropout=0.2,
                          kernel_initializer='he_uniform',
                          return_sequences=True,
                          input_shape=(x_train.shape[1], x_train.shape[2]),
                          )
                   )
-        model.add(LSTM(200,  # (None, 30, 118, 3, 20
+        model.add(LSTM(100,  # (None, 30, 118, 3, 20
                          recurrent_dropout=0.3,
                          recurrent_activation='tanh',
                          return_sequences=True,
@@ -138,23 +138,16 @@ class LSTM_s():
                          input_shape=(x_train.shape[1], x_train.shape[2]),
                          )
                   )
-        model.add(LSTM(300,  # (None, 30, 118, 3, 20
-                       recurrent_dropout=0.1,
-                       recurrent_activation='tanh',
-                       kernel_initializer='he_uniform',
-                       input_shape=(x_train.shape[1], x_train.shape[2]),
-                       )
-                  )
         model.add(Dropout(0.2))  # (None, 29, 117, 3, 20)
-        model.add(Dense(300, kernel_regularizer=regularizers.l2(0.1)))
+        model.add(Dense(200,  activation='tanh', kernel_regularizer=regularizers.l2(0.1)))
         model.add(Dropout(0.2))
-        model.add(Dense(100, kernel_regularizer=regularizers.l2(0.1)))
+        model.add(Dense(100,  activation='tanh', kernel_regularizer=regularizers.l2(0.1)))
         model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=lr_schedule),
                       metrics=['accuracy'])
-        print((joints, frames, coords, channels))
+        # print((joints, frames, coords, channels))
         model.summary()
 
         mcp_save = ModelCheckpoint(self.path + 'saved-models/' + self.modelType + '-bestWeights.h5',

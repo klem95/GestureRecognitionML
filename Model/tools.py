@@ -85,12 +85,12 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data
         frame_count += 1
 
     transposed = np.transpose(np.asarray(frames), (1, 0, 2))
-    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2], 1))
+    transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2]))
 
     if (zeroPad):
         print(largestFrameCount, transposed.shape)
-        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2], transposed.shape[3]))
-        result[:transposed.shape[0], :transposed.shape[1], : transposed.shape[2], :transposed.shape[3]] = transposed
+        result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2]))
+        result[:transposed.shape[0], :transposed.shape[1], :transposed.shape[2]] = transposed
     else:
         result = transposed
     return result

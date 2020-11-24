@@ -1,8 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/records" />
+      <excludeFolder url="file://$MODULE_DIR$/save120b100e100l7" />
+      <excludeFolder url="file://$MODULE_DIR$/save120b100e100l7cnnlstm" />
+      <excludeFolder url="file://$MODULE_DIR$/save30b100e100l10cnnlstm" />
+      <excludeFolder url="file://$MODULE_DIR$/save60b100e100l7" />
+      <excludeFolder url="file://$MODULE_DIR$/saved-models" />
+      <excludeFolder url="file://$MODULE_DIR$/savef120b100e100l10cnnlstm" />
+      <excludeFolder url="file://$MODULE_DIR$/savef120b100e100l10cnnlstm10minprclip" />
+      <excludeFolder url="file://$MODULE_DIR$/savef120b100e100l10cnnlstm20minprclip" />
+      <excludeFolder url="file://$MODULE_DIR$/savef60b100e100l10cnnlstm" />
+      <excludeFolder url="file://$MODULE_DIR$/splitRecords60frames" />
+      <excludeFolder url="file://$MODULE_DIR$/splits120" />
+      <excludeFolder url="file://$MODULE_DIR$/srf120l10" />
+      <excludeFolder url="file://$MODULE_DIR$/srf120l10ThirdOfData" />
+      <excludeFolder url="file://$MODULE_DIR$/srf120l10data66Percent" />
+      <excludeFolder url="file://$MODULE_DIR$/srf30l10" />
+      <excludeFolder url="file://$MODULE_DIR$/srf60l10" />
+      <excludeFolder url="file://$MODULE_DIR$/thirdofdata" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.6" jdkType="Python SDK" />
     <orderEntry type="jdk" jdkName="Python 3.6" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
