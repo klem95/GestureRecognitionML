@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 from Model.CnnLstm import cnnlstm
 from Model.Conv1d import conv1d
+from Model.DenseConv1dLstm import denseConv1d
 
 LSTM = "lstm"
 CNN = "cnn"
@@ -51,7 +52,7 @@ def main():
             prediction = model.predict(data, columnSize, True)
             print(prediction)
     elif args.m == CONV1D:
-        model = conv1d(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
+        model = denseConv1d(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         if(args.loadModel == False):
             model.train_model()
         else:
