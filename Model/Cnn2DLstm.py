@@ -6,6 +6,7 @@ from keras.layers import LSTM, Dense, Flatten, Embedding, Dropout, Conv2D, MaxPo
     Permute, Reshape, SpatialDropout2D
 from keras.optimizers import schedules
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential, model_from_json
 from sklearn.preprocessing import LabelEncoder
@@ -13,7 +14,6 @@ from sklearn.preprocessing import OneHotEncoder
 
 from .tools import biggestDocLength, encode_labels, loadModel
 from .Skeleton_structure import Skeleton
-
 
 class cnn2dlstm:
     def __init__(self, lr, bs, e, split, f, _loadModel=False, path=''):
@@ -140,6 +140,8 @@ class cnn2dlstm:
         print("Input shape (x_validation): ", x_validation.shape)
         print("Input shape (y_validation): ", y_validation.shape)
 
+
+       #self.visualize_sample(x_train, 11)
         # print("y_train sample: ", x_train[4][4])
         # print("y_validation sample: ", y_validation[0])
 
@@ -148,16 +150,16 @@ class cnn2dlstm:
         
         
         model.add(
-            Conv2D(filters=64, kernel_size=(9, 9), strides=(1, 3), activation='tanh', data_format="channels_last",
+            Conv2D(filters=20, kernel_size=(9, 9), strides=(1, 3), activation='tanh', data_format="channels_last",
                    input_shape=(self.largest_frame_count, self.feature_size, len(Skeleton.region_look_up))))
         # model.add(Conv2D(filters=64, kernel_size=(5, 5), activation='tanh'))
-        model.add(Conv2D(filters=256, kernel_size=(6, 6), strides=(1, 3), activation='tanh'))
-        model.add(Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 3), activation='tanh'))
-        model.add(Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), activation='tanh'))
+        model.add(Conv2D(filters=50, kernel_size=(6, 6), strides=(1, 3), activation='tanh'))
+        model.add(Conv2D(filters=100, kernel_size=(3, 3), strides=(1, 3), activation='tanh'))
+        #model.add(Conv2D(filters=256, kernel_size=(3, 3), strides=(3, 1), activation='tanh'))
 
         time_steps = model.output_shape[1]
         model.add(Reshape((time_steps, -1)))
-        model.add(Permute((2, 1), input_shape=(time_steps, -1)))
+        # model.add(Permute((2, 1), input_shape=(time_steps, -1)))
 
         model.add(LSTM(units=100, input_shape=model.output_shape, return_sequences=True, recurrent_dropout=0.2))
         model.add(LSTM(units=75, return_sequences=True, recurrent_dropout=0.3))
@@ -187,4 +189,29 @@ class cnn2dlstm:
         plt.plot(history.history['loss'], label='train')
         plt.plot(history.history['val_loss'], label='validation')
         plt.legend()
+        plt.show()
+
+    def visualize_sample (self, data, sample):
+        Z = data[sample, :, :, 0]
+        Z1 = data[sample, :, :, 1]
+        Z2 = data[sample, :, :, 2]
+        Z3 = data[sample, :, :, 3]
+        Z4 = data[sample, :, :, 4]
+        Z5 = data[sample, :, :, 5]
+
+        fig, (ax0, ax1, ax2, ax3, ax4, ax5) = plt.subplots(6, 1)
+        c = ax0.pcolor(Z)
+        ax1.set_title('HEAD_REGION')
+        c = ax1.pcolor(Z1)
+        ax1.set_title('UPPER_RIGHT_REGION')
+        c = ax2.pcolor(Z2)
+        ax2.set_title('UPPER_LEFT_REGION')
+        c = ax3.pcolor(Z3)
+        ax3.set_title('LOWER_RIGHT_REGION')
+        c = ax4.pcolor(Z4)
+        ax4.set_title('LOWER_LEFT_REGION')
+        c = ax5.pcolor(Z5)
+        ax5.set_title('FULL_BODY')
+
+        fig.tight_layout()
         plt.show()
