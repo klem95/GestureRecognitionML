@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 from Model.CnnLstm import cnnlstm
 from Model.Conv1d import conv1d
+from Model.ParallelLstm import parallelLstm
 from Model.DenseConv1dLstm import denseConv1d
 
 LSTM = "lstm"
@@ -14,6 +15,7 @@ CNN = "cnn"
 CNNLSTM = 'cnnltsm'
 CONV1D = 'conv1d'
 CNN2LSTM = 'cnn2dlstm'
+paraLstm = 'paraLstm'
 
 def main():
 
@@ -65,6 +67,10 @@ def main():
     elif args.m == CNN2LSTM:
         cnn_Lstm_model = cnn2dlstm(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
         cnn_Lstm_model.train_model()
+
+    elif args.m == paraLstm:
+        para_lstm_model = parallelLstm(args.lr, args.bs, args.e, args.s, args.f, args.loadModel)
+        para_lstm_model.train_model()
 
 
 if __name__ == "__main__":
