@@ -1,6 +1,6 @@
 import live
-import tools
-from set import set
+from . import tools
+from .set import set
 track = 4
 device = 0
 Synth = set.tracks[track]
@@ -31,15 +31,23 @@ class SynthSetting():
         for i in range(0, len(self.parameters)):
             self.values.append(self.getParameter(i))
 
-    def setParameters(self):
-        for i in range(0, len(self.parameters)):
-            self.setParameter(i, float(self.values[i][3]))
+    def setParameters(self, parameters = None, values = None):
+        if parameters == None:
+            parameters = self.parameters
+        if values == None:
+            values = self.values
+
+
+        for i in range(0, len(parameters)):
+            self.setParameter(i, float(values[i][3]))
 
     def saveParameters(self):
         tools.saveModel(self.values, self.name)
 
     def loadParameters(self):
         self.values = tools.loadModel(self.name)
+        if self.values == False:
+            raise Exception("File not found: " + self.name)
 
     def lerpParameters(self, otherParameters, t):
         for i in range(0, len(self.parameters)):
@@ -47,9 +55,11 @@ class SynthSetting():
             otherParam = float(otherParameters[i][3])
             lerpedParam = tools.lerp(param, otherParam, t)
             self.setParameter(i, lerpedParam)
+
     def play(self):
         print('playing ' + self.name)
         set.tracks[self.track].clips[1].play()
+
     def stop(self):
         print('stopping ' + self.name)
         set.tracks[self.track].stop()

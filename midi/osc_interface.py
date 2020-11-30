@@ -2,14 +2,49 @@ import live
 import random
 import time
 import numpy as np
-from Synth import SynthSetting
-from set import set
-import tools
+from .Synth import SynthSetting
+from .set import set
+from . import tools
 
 
 
 def savePreset():
     SynthSetting('label3', 0, save=True)
+
+
+
+
+class Player:
+    def __init__(self, _labelNames):
+        self.labelPredictions = None
+        self.isPlaying = False
+        self.labelNames = _labelNames
+        self.baseSynth = SynthSetting('label3', 0, load=True)
+        self.currentSynth = 0
+        self.synths = [
+            SynthSetting('label1', 0, load=True),
+            SynthSetting('label2', 1, load=True),
+            SynthSetting('label3', 2, load=True),
+        ]
+
+
+
+    def play(self):
+        self.isPlaying = True
+
+    def updatePredictions(self, labelPredictions):
+        self.labelPredictions = labelPredictions
+        self.currentSynth = self.labelNames.index(labelPredictions[0][0])
+        print(labelPredictions[0])
+        # self.currentSynth = labelPredictions
+
+    def clock(self):
+        # self.synths[]
+        self.baseSynth.lerpParameters()
+        print(self.labelPredictions[0])
+        pass
+
+
 
 
 def loadAndPlay():
@@ -43,5 +78,4 @@ def loadAndPlay():
 
 # savePreset()
 
-loadAndPlay()
 

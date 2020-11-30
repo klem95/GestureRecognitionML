@@ -1,7 +1,8 @@
 from numpy import load, save, genfromtxt
 import live
-
-from set import set
+import os
+print(os.getcwd())
+from .set import set
 
 
 def lerp(a, b, f):
@@ -17,7 +18,7 @@ def saveModel(object, name):
 def loadModel(name):
     try:
         print('Loading preset')
-        npObject = load('midi/presets/' + name + '.npy', allow_pickle=True)
+        npObject = load('GestureRecognitionML/midi/presets/' + name + '.npy', allow_pickle=True)
         return npObject
     except:
         print('No preset named: ' + name)

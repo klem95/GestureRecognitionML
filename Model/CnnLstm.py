@@ -162,6 +162,5 @@ class cnnlstm():
     def predict(self, data, columnSize, zeroPad):
         formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)
         shape = np.asarray([formattedData])
-        print(shape.shape)
         score = self.model.predict(shape, verbose=0)
         return score

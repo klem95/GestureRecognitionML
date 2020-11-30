@@ -88,7 +88,7 @@ def format(chunk, largestFrameCount, zeroPad=True, removeFirstLine=True): # data
     transposed = transposed.reshape((transposed.shape[0], transposed.shape[1], transposed.shape[2]))
 
     if (zeroPad):
-        print(largestFrameCount, transposed.shape)
+        # print(largestFrameCount, transposed.shape)
         result = np.zeros((transposed.shape[0], largestFrameCount, transposed.shape[2]))
         result[:transposed.shape[0], :transposed.shape[1], :transposed.shape[2]] = transposed
     else:
