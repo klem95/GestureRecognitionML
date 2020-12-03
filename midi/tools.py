@@ -17,7 +17,7 @@ def saveModel(object, name):
 def loadModel(name):
     try:
         print('Loading preset')
-        npObject = load('GestureRecognitionML/midi/presets/' + name + '.npy', allow_pickle=True)
+        npObject = load(os.path.dirname(os.path.realpath(__file__)) + '/presets/' + name + '.npy', allow_pickle=True)
         return npObject
     except:
         print('No preset named: ' + name)

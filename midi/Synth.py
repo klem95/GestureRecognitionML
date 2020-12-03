@@ -5,15 +5,19 @@ from .set import set
 
 
 class SynthSetting():
-    def __init__(self, _name, track = 4, save=False, load=False, device=0):
-        print('init synth ' + _name)
+    def __init__(self, name, track = 4, save=False, load=False, device=0):
+        print('INIT SETTING ' + name)
         self.track = track
         self.Track = set.tracks[self.track]
 
-        self.Device = self.Track.devices[device]
-        self.parameters = self.Track.devices[device].parameters
+        self.isPlaying = False,
 
-        self.name = _name
+        self.Device = None
+        if (save or load):
+            self.Device = self.Track.devices[device]
+            self.parameters = self.Track.devices[device].parameters
+
+        self.name = name
         self.values = []
         if(save):
             self.getParameters()
@@ -47,7 +51,7 @@ class SynthSetting():
         tools.saveModel(self.values, self.name)
 
     def loadParameters(self):
-        print('loading: ' + self.name )
+        print('loading: ' + self.name)
         self.values = tools.loadModel(self.name)
         if self.values == False:
             raise Exception("File not found: " + self.name)
@@ -60,9 +64,17 @@ class SynthSetting():
             self.setParameter(i, lerpedParam)
 
     def play(self):
-        print('playing ' + self.name)
-        self.Track.clips[1].play() # self.Track[self.track].clips[1].play()
+        if self.isPlaying == False:
+            self.isPlaying = True
+            print(self.isPlaying)
+
+            print('playing ' + self.name)
+            self.Track.clips[1].play() # self.Track[self.track].clips[1].play()
 
     def stop(self):
-        print('stopping ' + self.name)
-        self.Track.stop()
+        if self.isPlaying == True:
+            print(self.isPlaying)
+            self.isPlaying = False
+            print('stopping ' + self.name)
+            self.Track.stop()# self.Track[self.track].clips[1].play()
+            set.stop_track(track_index=self.track)
