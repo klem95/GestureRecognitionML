@@ -1,31 +1,72 @@
-import live
-import random
 import time
 import numpy as np
 from .Synth import SynthSetting
-from .set import set
 from . import tools
+import os
+import sys
 
 
+startIndex = 29
+synthAmount = 28
+
+
+def globalNameSynth(i):
+    return 'SYNTH_' + str(i)
+
+def globalNameRack(i):
+    return 'RACK_' + str(i)
 
 def savePreset():
-    SynthSetting('label3', 0, save=True)
+    print('saving presets...')
+    print(os.path.dirname(os.path.realpath(sys.argv[0])))
+
+    for i in range(0, synthAmount):
+        print('loading + ' + str(i))
+        SynthSetting(globalNameSynth(i), i + startIndex, save=True, device=0)
+        SynthSetting(globalNameRack(i), i + startIndex, save=True, device=1)
+
 
 
 
 
 class Player:
-    def __init__(self, _labelNames):
+    def __init__(self):
         self.labelPredictions = None
         self.isPlaying = False
-        self.labelNames = _labelNames
-        self.baseSynth = SynthSetting('label3', 0, load=True)
+        self.baseSynth = SynthSetting(globalNameSynth(0), 28, load=True, device=0)
+        self.baseRack= SynthSetting(globalNameSynth(0), 28, load=True, device=1)
         self.currentSynth = 0
-        self.synths = [
-            SynthSetting('label1', 0, load=True),
-            SynthSetting('label2', 1, load=True),
-            SynthSetting('label3', 2, load=True),
-        ]
+
+        self.synths = [SynthSetting(globalNameSynth(i), i + startIndex, load=True, device=0) for i in range(0, synthAmount)]
+        self.racks = [SynthSetting(globalNameRack(i), i + startIndex, load=True, device=1) for i in range(0, synthAmount)]
+
+        print(self.synths)
+
+
+    def weightedAverage(self, x, weights):
+        y = np.sum([x[i] * weights[i] for i in range(len(x))]) / np.sum(weights)
+        return round(y, 1)
+
+
+
+    def lerpAllLabels(self, predictions):
+        parameters = self.baseSynth.parameters
+        weightedParameters = np.array([])
+
+        for i in range(len(parameters)): # 200~ params
+            paramForSynths = np.array([])
+            weights = np.array([])
+            for synth in self.synths:
+                np.append(paramForSynths, float(synth.values[i][3]))
+                print(paramForSynths)
+
+            for weight in predictions:
+                np.append(weights, weight[1])
+            print('weights')
+            print(weights)
+            np.append(weightedParameters, self.weightedAverage(paramForSynths, weights))
+        print(weightedParameters)
+        return weightedParameters
 
 
 
@@ -33,15 +74,15 @@ class Player:
         self.isPlaying = True
 
     def updatePredictions(self, labelPredictions):
+        self.lerpAllLabels(labelPredictions)
+        #print(labelPredictions[0])
         self.labelPredictions = labelPredictions
-        self.currentSynth = self.labelNames.index(labelPredictions[0][0])
-        print(labelPredictions[0])
+        # self.currentSynth = self.labelNames.index(labelPredictions[0][0])
         # self.currentSynth = labelPredictions
 
     def clock(self):
         # self.synths[]
-        self.baseSynth.lerpParameters()
-        print(self.labelPredictions[0])
+        # print(self.labelPredictions[0])
         pass
 
 
@@ -76,6 +117,5 @@ def loadAndPlay():
 
 
 
-# savePreset()
 
 

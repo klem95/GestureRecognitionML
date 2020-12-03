@@ -1,7 +1,6 @@
 from numpy import load, save, genfromtxt
-import live
 import os
-print(os.getcwd())
+print('tools.py: importing set')
 from .set import set
 
 
@@ -12,7 +11,7 @@ def lerp(a, b, f):
 
 def saveModel(object, name):
     print("Saving...")
-    save('midi/presets/' + name +  '.npy', object)
+    save(os.path.dirname(os.path.realpath(__file__)) + '/presets/' + name +  '.npy', object)
     print("Saved %s preset to disk", name)
 
 def loadModel(name):
