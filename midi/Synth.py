@@ -5,7 +5,7 @@ from .set import set
 
 
 class SynthSetting():
-    def __init__(self, name, track = 4, save=False, load=False, device=0):
+    def __init__(self, name, track = 4, save=False, load=False, device=0, scanClipNames = False,):
         print('INIT SETTING ' + name)
         self.track = track
         self.Track = set.tracks[self.track]
@@ -19,12 +19,24 @@ class SynthSetting():
 
         self.name = name
         self.values = []
-        if(save):
+        if save:
             self.getParameters()
             self.saveParameters()
-        if(load):
+        if load:
             self.loadParameters()
             self.setParameters()
+
+
+        self.clipList = []
+        if scanClipNames:
+            self.Track.scan_clip_names() # self.Track[self.track].clips[1].play()
+            for i in range(len(self.Track.clips)):
+                if self.Track.clips[i] != None and self.Track.clips[i].name != '':
+                    self.clipList.append((self.Track.clips[i].name, i))
+            print(self.clipList)
+
+
+
 
 
     def setParameter(self, id, value):
@@ -63,18 +75,19 @@ class SynthSetting():
             lerpedParam = tools.lerp(param, otherParam, t)
             self.setParameter(i, lerpedParam)
 
-    def play(self):
-        if self.isPlaying == False:
-            self.isPlaying = True
-            print(self.isPlaying)
+    def play(self, labelName):
+        self.isPlaying = True
+        for clip in self.clipList:
+            if clip[0] == labelName:
+                print('playing ' + str())
+                self.Track.clips[clip[1]].play() # self.Track[self.track].clips[1].play()
+                break
 
-            print('playing ' + self.name)
-            self.Track.clips[1].play() # self.Track[self.track].clips[1].play()
+
 
     def stop(self):
         if self.isPlaying == True:
             print(self.isPlaying)
             self.isPlaying = False
             print('stopping ' + self.name)
-            self.Track.stop()# self.Track[self.track].clips[1].play()
             set.stop_track(track_index=self.track)

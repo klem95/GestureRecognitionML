@@ -6,7 +6,7 @@ import os
 import sys
 
 
-startIndex = 29
+startIndex = 2
 synthAmount = 28
 bpms = [
     20, 48, 20, 100, 67, 60, 72, 37, 94, 147, 82, 63, 90, 90, 105, 73, 86, 100, 94, 36, 80, 40, 20, 41, 37, 65, 22, 48
@@ -17,6 +17,10 @@ def globalNameSynth(i):
 
 def globalNameRack(i):
     return 'RACK_' + str(i)
+
+def globalNameClip(i):
+    return 'LABEL_' + str(i + 1) + '_START'
+
 
 def savePreset():
     print('saving presets...')
@@ -35,16 +39,15 @@ class Player:
     def __init__(self):
         self.labelPredictions = None
         self.isPlaying = False
-        self.baseSynth = SynthSetting(globalNameSynth(0), 28, load=True, device=0)
-        self.baseRack= SynthSetting(globalNameRack(0), 28, load=True, device=1)
+        self.baseSynth = SynthSetting(globalNameSynth(0), 1, load=True, device=0)
+        self.baseRack= SynthSetting(globalNameRack(0), 1, load=True, device=1)
         self.currentSynth = 0
 
-        self.synths = [SynthSetting(globalNameSynth(i), i + startIndex, load=True, device=0) for i in range(0, synthAmount)]
-        self.racks = [SynthSetting(globalNameRack(i), i + startIndex, load=True, device=1) for i in range(0, synthAmount)]
+        self.synths = [SynthSetting(globalNameSynth(i), 1, load=True, device=0) for i in range(0, synthAmount)]
+        self.racks = [SynthSetting(globalNameRack(i), 1, load=True, device=1) for i in range(0, synthAmount)]
+        self.clipPlaying = None
+        self.ClipPlayer = SynthSetting('CLIP_TRACK', 0, scanClipNames=True)
 
-        self.clips = [SynthSetting('CLIP_' + str(i), i) for i in range(0, synthAmount)]
-
-        print(self.synths)
 
 
     def weightedAverage(self, x, weights):
@@ -85,8 +88,11 @@ class Player:
         weights = np.empty(len(self.synths), dtype=float)
         for w in range(len(labelPredictions)):
             weights[w] = labelPredictions[w][1]
-        tools.set.tempo = self.weightedAverage(np.asarray(bpms), weights)
 
+
+        tempo = round(self.weightedAverage(np.asarray(bpms), np.exp(np.exp(weights) - 1) - 1), 0)
+        #print(tempo)
+        tools.set.tempo = tempo
 
 
         predictions = []
@@ -95,13 +101,15 @@ class Player:
         maxPrediction = max(predictions)
         maxPredictionIndex = predictions.index(maxPrediction)
 
-        #
-        # for i in range(len(self.clips)):
-        #     if(maxPredictionIndex != i):
-        #         self.clips[i].stop()
-        if(maxPrediction > 0.95):
-            self.clips[maxPredictionIndex].play()
-            print(maxPredictionIndex)
+        if(maxPrediction > 0.80):
+            if self.clipPlaying != maxPredictionIndex:
+                self.clipPlaying = maxPredictionIndex
+                print(labelPredictions[maxPredictionIndex])
+
+                print('hit thresh')
+                self.ClipPlayer.play(globalNameClip(maxPredictionIndex))
+                # print(labelPredictions[maxPrediction])
+                print(globalNameClip(maxPredictionIndex))
 
 
 
@@ -114,10 +122,10 @@ class Player:
         # self.currentSynth = labelPredictions
 
     def updateDynamicParameters(self, dynamicParams):
-        print(dynamicParams)
-        self.baseRack.setParameter(1, min(127, dynamicParams[2][1]))
-        self.baseRack.setParameter(5, min(127, dynamicParams[3][1]))
-        self.baseRack.setParameter(6, min(127, dynamicParams[3][1]))
+        # [('shoulder_r_vel', 73.7023417154948), ('shoulder_l_vel', 55.450635274251304), ('wrist_r_vel', 75.25065104166667), ('wrist_l_vel', 77.47452799479167), ('ankle_r_vel', 127.10797373453777), ('ankle_l_vel', 125.05631510416667)]
+        # self.baseRack.setParameter(1, min(127, dynamicParams[2][1]))
+        # self.baseRack.setParameter(5, min(127, dynamicParams[3][1]))
+        # self.baseRack.setParameter(6, min(127, dynamicParams[3][1]))
         pass
 
     def clock(self):
