@@ -157,6 +157,7 @@ class cnnlstm():
         plt.legend()
         plt.show()
 
+        
         Tools.saveModel(self.path, model, self.modelType)
 
     def predict(self, data, columnSize, zeroPad):

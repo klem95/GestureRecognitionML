@@ -1,31 +1,49 @@
-import live
+print('Synth.py: importing tools...')
 from . import tools
+print('Synth.py: importing set...')
 from .set import set
-track = 4
-device = 0
-Synth = set.tracks[track]
-Device = Synth.devices[device]
 
 
 class SynthSetting():
-    def __init__(self, _name, _track, save=False, load=False):
-        self.parameters = Synth.devices[0].parameters
-        self.name = _name
-        self.track = _track
+    def __init__(self, name, track = 4, save=False, load=False, device=0, scanClipNames = False,):
+        print('INIT SETTING ' + name)
+        self.track = track
+        self.Track = set.tracks[self.track]
+
+        self.isPlaying = False,
+
+        self.Device = None
+        if (save or load):
+            self.Device = self.Track.devices[device]
+            self.parameters = self.Track.devices[device].parameters
+
+        self.name = name
         self.values = []
-        if(save):
+        if save:
             self.getParameters()
             self.saveParameters()
-        if(load):
+        if load:
             self.loadParameters()
             self.setParameters()
 
 
+        self.clipList = []
+        if scanClipNames:
+            self.Track.scan_clip_names() # self.Track[self.track].clips[1].play()
+            for i in range(len(self.Track.clips)):
+                if self.Track.clips[i] != None and self.Track.clips[i].name != '':
+                    self.clipList.append((self.Track.clips[i].name, i))
+            print(self.clipList)
+
+
+
+
+
     def setParameter(self, id, value):
-        Device.parameters[id].value = value
+        self.Device.parameters[id].value = value
 
     def getParameter(self, id):
-        return Device.parameters[id].value
+        return self.Device.parameters[id].value
 
     def getParameters(self):
         for i in range(0, len(self.parameters)):
@@ -45,6 +63,7 @@ class SynthSetting():
         tools.saveModel(self.values, self.name)
 
     def loadParameters(self):
+        print('loading: ' + self.name)
         self.values = tools.loadModel(self.name)
         if self.values == False:
             raise Exception("File not found: " + self.name)
@@ -56,10 +75,19 @@ class SynthSetting():
             lerpedParam = tools.lerp(param, otherParam, t)
             self.setParameter(i, lerpedParam)
 
-    def play(self):
-        print('playing ' + self.name)
-        set.tracks[self.track].clips[1].play()
+    def play(self, labelName):
+        self.isPlaying = True
+        for clip in self.clipList:
+            if clip[0] == labelName:
+                print('playing ' + str())
+                self.Track.clips[clip[1]].play() # self.Track[self.track].clips[1].play()
+                break
+
+
 
     def stop(self):
-        print('stopping ' + self.name)
-        set.tracks[self.track].stop()
+        if self.isPlaying == True:
+            print(self.isPlaying)
+            self.isPlaying = False
+            print('stopping ' + self.name)
+            set.stop_track(track_index=self.track)
