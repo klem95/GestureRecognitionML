@@ -5,7 +5,7 @@ class Skeleton:
     UPPER_LEFT_REGION = 2
     LOWER_RIGHT_REGION = 3
     LOWER_LEFT_REGION = 4
-    FULL_BODY =  5
+    FULL_BODY = 5
 
     # joints
     PELVIS = 0
@@ -40,6 +40,19 @@ class Skeleton:
     EAR_LEFT = 29
     EYE_RIGHT = 30
     EAR_RIGHT = 31
+
+    #FAST PARAMETERS
+    SHOULDER_R_VEL = 0
+    SHOULDER_L_VEL = 1
+    WRIST_R_VEL = 2
+    WRIST_L_VEL = 3
+    ANKLE_RIGHT_VEL = 4
+    ANKLE_LEFT_VEL = 5
+    PELVIS_POS_X = 6
+    PELVIS_POS_Y = 7
+    PELVIS_POS_Z = 8
+    ANGLE_R_WING = 9
+    ANGLE_L_WING = 10
 
     region_look_up = {
         HEAD_REGION: [SPINE_CHEST, CLAVICLE_RIGHT, NECK, CLAVICLE_LEFT, HEAD, NOSE, EYE_LEFT, EAR_LEFT, EYE_RIGHT,

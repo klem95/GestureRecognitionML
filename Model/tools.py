@@ -154,8 +154,8 @@ def encode_labels(file_names):
         mappedFileNames.append(filename.split("_")[0])
         print(file_names)
     integer_encoded = label_encoder.fit_transform(mappedFileNames)
-    print(integer_encoded)
-    print(mappedFileNames)
+    #print(integer_encoded)
+    #print(mappedFileNames)
     integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
     onehot_encoded = oneHot_encoder.fit_transform(integer_encoded)
     return onehot_encoded
