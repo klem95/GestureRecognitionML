@@ -4,7 +4,8 @@ from .Synth import SynthSetting
 from . import tools
 import os
 import sys
-
+from datetime import datetime
+import time
 
 startIndex = 2
 synthAmount = 28
@@ -47,7 +48,7 @@ class Player:
         self.racks = [SynthSetting(globalNameRack(i), 1, load=True, device=1) for i in range(0, synthAmount)]
         self.clipPlaying = None
         self.ClipPlayer = SynthSetting('CLIP_TRACK', 0, scanClipNames=True)
-
+        self.lastInputTimeAgo = time.time()
 
 
     def weightedAverage(self, x, weights):
@@ -76,6 +77,15 @@ class Player:
         self.isPlaying = True
 
     def updatePredictions(self, labelPredictions):
+        deltaTime = time.time() - self.lastInputTimeAgo
+        print(deltaTime)
+        self.lastInputTimeAgo = time.time()
+        if deltaTime > 0.5:
+            tools.set.volume = 1 / (deltaTime / 0.5)
+        else:
+            tools.set.volume = 1
+
+
         newParamsSynth = self.lerpAllParameters(self.baseSynth, labelPredictions)
         newParamsRack = self.lerpAllParameters(self.baseRack, labelPredictions)
 
