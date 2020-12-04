@@ -5,6 +5,8 @@ __pycache__/
 
 Trained_models/
 numpy-buffers/
+splits30fpc/
+newData/
 
 # C extensions
 *.so
