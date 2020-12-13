@@ -7,7 +7,7 @@ import numpy as np
 from Model.CnnLstm import cnnlstm
 from Model.Conv1d import conv1d
 from Model.Conv2d import conv2d
-from Model.DenseConv1dLstm import denseConv1d
+from Model.LstmConv1d import denseConv1d
 
 LSTM = "lstm"
 CNN = "cnn"
