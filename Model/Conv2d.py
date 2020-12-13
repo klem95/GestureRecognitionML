@@ -1,14 +1,13 @@
 import numpy as np
 from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Dropout, Conv1D, Reshape, Permute, Input, concatenate
+from keras.layers import LSTM, Dense, Flatten, Dropout, Conv2D, MaxPooling2D, Reshape, Permute
 from keras.optimizers import schedules
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 import csv
-from keras.models import Model
 import matplotlib.pyplot as plt
 from numpy import load, save, genfromtxt
 import glob2
@@ -19,14 +18,16 @@ oneHot_encoder = OneHotEncoder(sparse=False)
 
 from GestureRecognitionML import Tools
 
-class parallelLstm ():
+
+class conv2d():
+
     def __init__(self, lr, bs, e, split, f, loadModel=False, path=''):
         self.path = path
         self.batch_size = 20 if bs is None else bs
         self.learning_rate = 0.01 if lr is None else lr
         self.epochs = 400 if e is None else e
         self.validationDataEvery = 5 if split is None else split
-        self.label_size = 10
+        self.label_size = 0
         self.dataPath = 'Data' if f is None else f
         self.trained_model_path = 'Trained_models'  # use your path
         self.time_steps = 0
@@ -96,43 +97,38 @@ class parallelLstm ():
         [x_validation, y_validation] = Tools.shuffleData(x_validation, y_validation)
         [x_train, y_train] = Tools.shuffleData(x_train, y_train)
 
-        sequence = x_train.shape[0]
         joints = x_train.shape[1]
         frames = x_train.shape[2]
         coords = x_train.shape[3]
 
-        trunk_joint_count = 3
-        upper_region_joint_count = 8
-        lower_region_joint_count = 6
+        self.label_size = y_train.shape[1]
 
+        model = Sequential()
+        model.add(Conv2D(20,  # input shape: (None, 32, 120, 3)
+                         activation='tanh',
+                         kernel_initializer='he_uniform',
+                         data_format='channels_last',
+                         input_shape=(joints, frames, coords), # 30 joints, 60 frames, 3 channels representing axis position coordinates (xyz)
+                         kernel_size=(3, 3))) # Kernel size is set to 3, 3
+        model.add(MaxPooling2D(pool_size=(2, 2), padding="same")) # Maxpool
 
-        x_train = x_train.reshape((x_train.shape[0], -1, x_train.shape[2]))
-        x_validation = x_validation.reshape((x_validation.shape[0], -1, x_validation.shape[2]))
-        print()
-        # =(frames, joints),
+        model.add(Conv2D(50, kernel_size=(2, 2), activation='tanh'))
+        model.add(MaxPooling2D(pool_size=(2, 2),  padding="same"))
 
-        trunk_input = Input(shape=(frames,trunk_joint_count * 3))
-        upper_left_input = Input(shape=(frames,upper_region_joint_count * 3))
-        upper_right_input = Input(shape=(frames,upper_region_joint_count * 3))
-        lower_left_input = Input(shape=(frames,lower_region_joint_count * 3))
-        lower_right_input = Input(shape=(frames,lower_region_joint_count * 3))
+        model.add(Conv2D(100, kernel_size=(3, 3), activation='tanh'))
+        model.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
 
-        trunk_lstm_0 = LSTM(units=20, return_sequences=True, recurrent_dropout=0.2)(trunk_input)
-        upper_left_lstm_0 = LSTM(units=20, return_sequences=True, recurrent_dropout=0.2)(upper_left_input)
-        upper_right_lstm_0 = LSTM(units=20, return_sequences=True, recurrent_dropout=0.2)(upper_right_input)
+        model.add(Dropout(0.2))  # (None, 29, 117, 3, 20)
+        model.add(Dense(300, kernel_regularizer=regularizers.l2(0.1)))
+        model.add(Dropout(0.2))
+        model.add(Dense(100, kernel_regularizer=regularizers.l2(0.1)))
+        model.add(Flatten())
 
-        concat_layer = concatenate([trunk_lstm_0, upper_left_lstm_0, upper_right_lstm_0])
-        final_lstm_layer = LSTM(units=20, return_sequences=True, recurrent_dropout=0.2)(concat_layer)
-
-        flatten = Flatten()(final_lstm_layer)
-
-        output = Dense(self.label_size, activation='softmax') (flatten)
-        model = Model(inputs=[trunk_input,upper_left_input ], outputs=output)
-
-        print(model.summary())
-
+        model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(),
                       metrics=['accuracy'])
+        print((joints, frames, coords))
+        model.summary()
 
         mcp_save = ModelCheckpoint(self.path + 'saved-models/' + self.modelType + '-bestWeights.h5',
                                    save_best_only=True,
@@ -140,3 +136,19 @@ class parallelLstm ():
                                    mode='min')
         history = model.fit(x_train, y_train, epochs=self.epochs, batch_size=self.batch_size,
                             validation_data=(x_validation, y_validation), callbacks=[mcp_save])
+        plt.plot(history.history['loss'], label='train')
+        plt.plot(history.history['val_loss'], label='validation')
+        plt.legend()
+        plt.show()
+
+        Tools.saveModel(self.path, model, self.modelType)
+
+    def predict(self, data, columnSize, zeroPad):
+        print('data')
+        print(data)
+
+        formattedData = Tools.format(data, columnSize, zeroPad, removeFirstLine=False)
+        shape = np.asarray([formattedData])
+        print(shape.shape)
+        score = self.model.predict(shape, verbose=0)
+        return score

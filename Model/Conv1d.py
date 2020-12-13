@@ -1,7 +1,7 @@
 import numpy as np
 from keras.models import Sequential, model_from_json
 from keras.optimizers import Adam
-from keras.layers import LSTM, Dense, Flatten, Dropout, Conv1D, Reshape, Permute
+from keras.layers import LSTM, Dense, Flatten, Dropout, Conv1D, MaxPooling1D, Reshape, Permute
 from keras.optimizers import schedules
 from keras import regularizers
 from keras.callbacks import ModelCheckpoint
@@ -101,7 +101,6 @@ class conv1d():
         joints = x_train.shape[1]
         frames = x_train.shape[2]
         coords = x_train.shape[3]
-        channels = x_train.shape[4]
 
 
 
@@ -122,32 +121,21 @@ class conv1d():
             decay_rate=0.9)
 
         model = Sequential()
-        model.add(Conv1D(200,  # (None, 30, 118, 3, 20)
-                         activation='tanh',
-                         kernel_initializer='he_uniform',
-                         data_format='channels_last',
-                         input_shape=(x_train.shape[1], x_train.shape[2]),
-                         kernel_size=(3)
-                         )
-                  )
-        model.add(Conv1D(200,  # (None, 30, 118, 3, 20)
-                         activation='tanh',
-                         kernel_initializer='he_uniform',
-                         data_format='channels_last',
-                         input_shape=(x_train.shape[1], x_train.shape[2]),
-                         kernel_size=(6)
-                         )
-                  )
+        model.add(Conv1D(300, input_shape=(frames, joints), kernel_size=(2), strides=1, activation='tanh'))
+        model.add(MaxPooling1D(pool_size=(2), strides=1, padding="same"))
+        model.add(Conv1D(300,kernel_size=(2), strides=1, activation='tanh'))
+        model.add(MaxPooling1D(pool_size=(2), strides=1, padding="same"))
+
+        model.add(Flatten())
         model.add(Dropout(0.2))  # (None, 29, 117, 3, 20)
         model.add(Dense(300, kernel_regularizer=regularizers.l2(0.1)))
         model.add(Dropout(0.2))
         model.add(Dense(100, kernel_regularizer=regularizers.l2(0.1)))
-        model.add(Flatten())
 
         model.add(Dense(self.label_size, activation='softmax'))  # Classification
         model.compile(loss='categorical_crossentropy', optimizer=Adam(),
                       metrics=['accuracy'])
-        print((joints, frames, coords, channels))
+        print((joints, frames, coords))
         model.summary()
 
         mcp_save = ModelCheckpoint(self.path + 'saved-models/' + self.modelType + '-bestWeights.h5',

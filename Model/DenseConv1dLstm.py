@@ -118,17 +118,18 @@ class denseConv1d():
 
 
         model = Sequential()
-        model.add(Conv1D(300, input_shape=(frames, joints), kernel_size=(2), strides=1, activation='tanh'))
-        model.add(MaxPooling1D(pool_size=(2), strides=1, padding="same"))
-        model.add(Conv1D(300, input_shape=(frames, joints), kernel_size=(2), strides=1, activation='tanh'))
-        #model.add(Permute((2, 1, 3))) # Permuting the conv output shape such that frames are given as the sequential input for the LSTM layers
+        model.add(Permute((2, 1, 3))) # Permuting the conv output shape such that frames are given as the sequential input for the LSTM layers
 
         model.add(LSTM(joints, activation='tanh', kernel_initializer='he_uniform', return_sequences=True, input_shape=(frames, joints)))
         model.add(LSTM(units=joints, input_shape=(model.output_shape), return_sequences=True, recurrent_dropout=0.1))
 
+        model.add(Conv1D(300, input_shape=(frames, joints), kernel_size=(2), strides=1, activation='tanh'))
+        model.add(MaxPooling1D(pool_size=(2), strides=1, padding="same"))
+        model.add(Conv1D(300, input_shape=(frames, joints), kernel_size=(2), strides=1, activation='tanh'))
+        model.add(MaxPooling1D(pool_size=(2), strides=1, padding="same"))
 
         model.add(Dropout(0.2))
-        model.add(Dense(300, activation='tanh', kernel_regularizer=regularizers.l2(0.1)))
+        model.add(Dense(100, activation='tanh', kernel_regularizer=regularizers.l2(0.1)))
         model.add(Dropout(0.2))
         model.add(Dense(100, activation='tanh', kernel_regularizer=regularizers.l2(0.1)))
         model.add(Flatten())
