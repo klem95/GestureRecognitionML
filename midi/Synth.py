@@ -19,6 +19,7 @@ class SynthSetting():
 
         self.name = name
         self.values = []
+        self.maxValues = []
         if save:
             self.getParameters()
             self.saveParameters()
@@ -29,15 +30,17 @@ class SynthSetting():
 
         self.clipList = []
         if scanClipNames:
-            self.Track.scan_clip_names() # self.Track[self.track].clips[1].play()
+            # self.Track.scan_clip_names() # self.Track[self.track].clips[1].play()
             for i in range(len(self.Track.clips)):
                 if self.Track.clips[i] != None and self.Track.clips[i].name != '':
                     self.clipList.append((self.Track.clips[i].name, i))
             print(self.clipList)
 
-
-
-
+    def getMaximumValues(self):
+        maxParams = []
+        for param in self.parameters:
+            maxParams.append(param.maximum)
+        return maxParams
 
     def setParameter(self, id, value):
         self.Device.parameters[id].value = value
